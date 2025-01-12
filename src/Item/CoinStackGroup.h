@@ -33,6 +33,7 @@ public:
     void validateClipping();
 
 private:
+    static constexpr f32 fallDistance= 74.5f;
     sead::Vector3f mClippingPos = sead::Vector3f(0.0f, 0.0f, 0.0f);
     s32 mStackAmount = 0;
     CoinStack* mCoinStack = nullptr;

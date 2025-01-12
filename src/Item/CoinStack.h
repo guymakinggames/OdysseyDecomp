@@ -41,6 +41,7 @@ public:
     void exeCollected();
 
     f32 getTransY() const { return mTransY; }
+    void setTransY(f32 transY) { mTransY = transY; }
 
 private:
     const f32* mExternalFallDistance = nullptr;

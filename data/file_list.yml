@@ -48850,69 +48850,69 @@ Item/CoinStackGroup.o:
   - offset: 0x1c67cc
     size: 136
     label: _ZN14CoinStackGroupC2EPKc
-    status: NotDecompiled
+    status: Matching
   - offset: 0x1c6854
     size: 148
     label: _ZN14CoinStackGroupC1EPKc
-    status: NotDecompiled
+    status: Matching
   - offset: 0x1c68e8
     size: 444
     label: _ZN14CoinStackGroup4initERKN2al13ActorInitInfoE
-    status: NotDecompiled
+    status: Matching
   - offset: 0x1c6aa4
     size: 572
     label: _ZN14CoinStackGroup22generateCoinStackGroupERKN2al13ActorInitInfoEi
-    status: NotDecompiled
+    status: NonMatchingMajor
   - offset: 0x1c6ce0
     size: 16
     label: _ZN14CoinStackGroup15makeStackAppearEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x1c6cf0
     size: 16
     label: _ZN14CoinStackGroup18makeStackDisappearEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x1c6d00
     size: 84
     label: _ZN14CoinStackGroup7controlEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x1c6d54
     size: 76
     label: _ZN14CoinStackGroup10receiveMsgEPKN2al9SensorMsgEPNS0_9HitSensorES5_
-    status: NotDecompiled
+    status: Matching
   - offset: 0x1c6da0
     size: 44
     label: _ZN14CoinStackGroup13makeActorDeadEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x1c6dcc
     size: 52
     label: _ZN14CoinStackGroup14makeActorAliveEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x1c6e00
     size: 236
     label: _ZN14CoinStackGroup19setStackAsCollectedEP9CoinStack
-    status: NotDecompiled
+    status: Matching
   - offset: 0x1c6eec
     size: 128
     label: _ZN14CoinStackGroup18updateClippingInfoEj
-    status: NotDecompiled
+    status: Matching
   - offset: 0x1c6f6c
     size: 4
     label: _ZN14CoinStackGroup16validateClippingEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x1c6f70
     size: 28
     label: _ZNK2al10FunctorV0MIP14CoinStackGroupMS1_FvvEEclEv
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x1c6f8c
     size: 76
     label: _ZNK2al10FunctorV0MIP14CoinStackGroupMS1_FvvEE5cloneEv
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x1c6fd8
     size: 4
     label: _ZN2al10FunctorV0MIP14CoinStackGroupMS1_FvvEED0Ev
-    status: NotDecompiled
+    status: Matching
     lazy: true
 Item/CoinStateAppearRotate.o:
   '.text':
