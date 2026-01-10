@@ -8,7 +8,7 @@ template <typename T>
 class AudioInfoListWithParts;
 class ByamlIter;
 class SeActionInfo;
-class SeEmitterInfo;
+struct SeEmitterInfo;
 class SeHitReactionInfo;
 class SePlayInfo;
 
