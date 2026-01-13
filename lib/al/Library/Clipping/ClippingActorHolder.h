@@ -6,7 +6,7 @@
 
 namespace sead {
 class Thread;
-}  // namespace sead
+}
 
 namespace al {
 struct ActorInitInfo;

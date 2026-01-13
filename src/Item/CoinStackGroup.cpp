@@ -84,15 +84,21 @@ void CoinStackGroup::makeActorAlive() {
         mCoinStack->makeStackAppear();
 }
 
+inline f32 getRandom(f32 scale) {
+    f32 value = sead::Random().getF32();
+    return scale * value * ((value > 0.5f) ? 1.0f : -1.0f);
+}
+
 void CoinStackGroup::generateCoinStackGroup(const al::ActorInitInfo& initInfo, s32 stackAmount) {
     f32 clippingRadius = updateClippingInfo(stackAmount);
-    sead::Vector3f trans = al::getTrans(this);
+    const sead::Vector3f& trans2 = al::getTrans(this);
 
     if (stackAmount == 0)
         return;
 
+    sead::Vector3f trans = trans2;
     CoinStack* previousStack = nullptr;
-    for (s32 index = 0; index != stackAmount; index++) {
+    for (u32 index = 0; index != (u32)stackAmount; index++) {
         CoinStack* newStack = new CoinStack("CoinStack");
         newStack->init(initInfo);
 
@@ -103,21 +109,9 @@ void CoinStackGroup::generateCoinStackGroup(const al::ActorInitInfo& initInfo, s
             previousStack = newStack;
             continue;
         }
-        sead::Random rnd;
-        rnd.init();
-        f32 randx = rnd.getF32();
-        f32 fVar2 = 1.0f;
-        if (randx <= 0.5f)
-            fVar2 = -1.0f;
-        rnd.init();
-        f32 randz = rnd.getF32();
-        f32 fVar3 = 1.0f;
-        if (randz <= 0.5f)
-            fVar3 = -1.0f;
-        sead::Vector3f strans;
-        strans.x = trans.x + randx * 10.0f * fVar2 + 0.0f;
-        strans.z = trans.y + randz * 10.0f * fVar3 + 0.0f;
-        strans.y = trans.z + index * 74.5f;
+
+        sead::Vector3f strans(trans.x + getRandom(10.0f) + 0.0f, trans.y + index * 74.5f,
+                              trans.z + getRandom(10.0f) + 0.0f);
         newStack->postInit(this, strans, previousStack, mClippingPos, clippingRadius,
                            &fallDistance);
         previousStack = newStack;
