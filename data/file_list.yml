@@ -39345,7 +39345,7 @@ Enemy/Pukupuku.o:
   - offset: 0x176c94
     size: 608
     label: _ZN8Pukupuku20updateWaterConditionEv
-    status: NotDecompiled
+    status: Wip
   - offset: 0x176ef4
     size: 1556
     label: _ZN8Pukupuku7controlEv
@@ -39353,7 +39353,7 @@ Enemy/Pukupuku.o:
   - offset: 0x177508
     size: 204
     label: _ZN8Pukupuku18updateInputRollingEv
-    status: NonMatchingMajor
+    status: Matching
   - offset: 0x1775d4
     size: 172
     label: _ZN8Pukupuku15updateInputKissEv
@@ -39361,7 +39361,7 @@ Enemy/Pukupuku.o:
   - offset: 0x177680
     size: 240
     label: _ZN8Pukupuku17updateInputUpDownEv
-    status: NotDecompiled
+    status: Wip
   - offset: 0x177770
     size: 8
     label: _ZNK8Pukupuku11isSwimTypeAEv
@@ -39369,7 +39369,7 @@ Enemy/Pukupuku.o:
   - offset: 0x177778
     size: 592
     label: _ZN8Pukupuku14updateVelocityEv
-    status: NotDecompiled
+    status: Wip
   - offset: 0x1779c8
     size: 88
     label: _ZN8Pukupuku11exeReactionEv
@@ -39377,7 +39377,7 @@ Enemy/Pukupuku.o:
   - offset: 0x177a20
     size: 596
     label: _ZN8Pukupuku18exeWaitRollingRailEv
-    status: NotDecompiled
+    status: Wip
   - offset: 0x177c74
     size: 600
     label: _Z14FUN_7100177c74PN4sead7Vector3IfEEPN2al9LiveActorE
@@ -39417,7 +39417,7 @@ Enemy/Pukupuku.o:
   - offset: 0x178adc
     size: 536
     label: _ZN8Pukupuku10onWaterOutEv
-    status: NonMatchingMajor
+    status: Matching
   - offset: 0x178cf4
     size: 176
     label: _ZN8Pukupuku33tryAddVelocityWaterSurfaceJumpOutEv
@@ -39429,7 +39429,7 @@ Enemy/Pukupuku.o:
   - offset: 0x178eb8
     size: 196
     label: _ZN8Pukupuku15approachSurfaceEv
-    status: NonMatchingMajor
+    status: Matching
   - offset: 0x178f7c
     size: 1480
     label: _ZN8Pukupuku14updatePoseSwimEv
@@ -39449,11 +39449,11 @@ Enemy/Pukupuku.o:
   - offset: 0x17a068
     size: 380
     label: _ZN8Pukupuku22exeCaptureReactionWallEv
-    status: NotDecompiled
+    status: Wip
   - offset: 0x17a1e4
     size: 348
     label: _ZNK8Pukupuku21checkJumpOutConditionEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x17a340
     size: 192
     label: _ZN8Pukupuku23updateCameraCaptureWaitEv
@@ -39461,15 +39461,15 @@ Enemy/Pukupuku.o:
   - offset: 0x17a400
     size: 1580
     label: _ZN8Pukupuku14exeCaptureWaitEv
-    status: NotDecompiled
+    status: Wip
   - offset: 0x17aa2c
     size: 492
     label: _ZN8Pukupuku16exeCaptureAttackEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x17ac18
     size: 604
     label: _ZN8Pukupuku17exeCaptureRollingEv
-    status: NotDecompiled
+    status: Wip
   - offset: 0x17ae74
     size: 32
     label: _ZN8Pukupuku21updateGroundTimeLimitEv
@@ -39477,7 +39477,7 @@ Enemy/Pukupuku.o:
   - offset: 0x17ae94
     size: 512
     label: _ZN8Pukupuku20exeCaptureWaitGroundEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x17b094
     size: 184
     label: _Z14FUN_710017b094P8PukupukuRKN4sead7Vector3IfEE
@@ -39485,11 +39485,11 @@ Enemy/Pukupuku.o:
   - offset: 0x17b14c
     size: 492
     label: _ZN8Pukupuku20exeCaptureJumpGroundEv
-    status: NotDecompiled
+    status: Wip
   - offset: 0x17b338
     size: 468
     label: _ZN8Pukupuku20exeCaptureLandGroundEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x17b50c
     size: 120
     label: _ZN8Pukupuku11exeBlowDownEv

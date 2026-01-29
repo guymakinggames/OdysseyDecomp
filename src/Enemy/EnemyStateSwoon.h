@@ -32,7 +32,7 @@ struct EnemyStateSwoonInitParam {
     const char* hitReactionAnimName = nullptr;
     const char* hitReactionLandAnimName = nullptr;
     bool hasSubActors = false;
-    bool hasStartLandAnimation = true;
+    bool hasStartLandAnimation = false;
     bool hasLockOnDelay = false;
     bool isCancelLoopOnProhibitedArea = false;
     s32 swoonDuration = 600;

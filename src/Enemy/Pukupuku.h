@@ -50,7 +50,7 @@ public:
     void approachSurface();
     bool updatePoseSwim();
     void onWaterIn();
-    bool checkJumpOutCondition();
+    bool checkJumpOutCondition() const;
     void updateCameraCaptureWait();
     bool updateGroundTimeLimit();
 
@@ -78,7 +78,7 @@ public:
 private:
     al::WaterSurfaceFinder* mWaterSurfaceFinder = nullptr;
     CapTargetInfo* mCapTargetInfo = nullptr;
-    IUsePlayerHack* _118 = nullptr;
+    IUsePlayerHack* mPlayerHack = nullptr;
     EnemyStateReviveInsideScreen* mEnemyStateReviveInsideScreen = nullptr;
     EnemyStateSwoon* mEnemyStateSwoon = nullptr;
     HackerStateNormalJump* mHackerStateNormalJump = nullptr;
@@ -113,8 +113,16 @@ private:
     bool _2c5 = false;
     s32 _2c8 = 0;
     PlayerHackStartShaderCtrl* mPlayerHackStartShaderCtrl = nullptr;
-    bool mIsTriggerSwimDash = false;
-    bool _2d9 = false;
+
+    union {
+        struct {
+            bool mIsTriggerSwimDash;
+            bool _2d9;
+        };
+
+        u16 _2d8 = 0;
+    };
+
     s32 _2dc = 0;
     s32 _2e0 = 0;
     bool mIsPukupukuSnow = false;
