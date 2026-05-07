@@ -9,10 +9,15 @@
 namespace al {
 struct GameSystemInfo;
 struct DrawSystemInfo;
-struct SequenceInitInfo;
 struct AudioSystemInfo;
 class AudioDirector;
 class Scene;
+
+struct SequenceInitInfo {
+    SequenceInitInfo(const al::GameSystemInfo* info);
+
+    const al::GameSystemInfo* systemInfo;
+};
 
 class Sequence : public NerveExecutor, public IUseAudioKeeper, public IUseSceneCreator {
 public:

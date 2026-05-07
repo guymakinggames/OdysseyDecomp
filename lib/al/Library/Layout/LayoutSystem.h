@@ -14,7 +14,22 @@ namespace al {
 class EffectSystem;
 class ExecuteDirector;
 class FontHolder;
-class LayoutSystem;
+
+class LayoutSystem {
+public:
+    LayoutSystem();
+    void init();
+    void initGraphicsResource();
+    void initFont();
+    void initEui();
+    void tryFindFont(const char*) const;
+    void getFontNamePair(int);
+    void prepareInitFontForChangeLanguage();
+    void initFontForChangeLanguage();
+    void reinitFont(sead::Heap*);
+    void beginDraw() const;
+    void endDraw() const;
+};
 
 class LayoutKit {
 public:
@@ -51,11 +66,5 @@ private:
 };
 
 static_assert(sizeof(LayoutKit) == 0x30);
-
-
-class LayoutSystem {
-public:
-    LayoutSystem();
-};
 
 }  // namespace al

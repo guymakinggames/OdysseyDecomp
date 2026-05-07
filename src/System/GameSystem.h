@@ -14,7 +14,7 @@ class HtmlViewer;
 class GamePadSystem;
 class ApplicationMessageReceiver;
 class WaveVibrationHolder;
-class AudioResourceLoadGroupInfo;
+struct AudioResourceLoadGroupInfo;
 }  // namespace al
 
 class GameConfigData;
@@ -23,6 +23,8 @@ class ProjectNfpDirector;
 class GameSystem : public al::NerveExecutor {
 public:
     GameSystem();
+    ~GameSystem() override;
+
     virtual void init();
     virtual void movement();
     void setPadName();
