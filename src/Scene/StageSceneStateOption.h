@@ -1,7 +1,14 @@
 #pragma once
 
+#include <basis/seadTypes.h>
+#include <prim/seadSafeString.h>
+
 #include "Library/Message/IUseMessageSystem.h"
 #include "Library/Nerve/NerveStateBase.h"
+
+namespace nn::ui2d {
+class TextureInfo;
+}
 
 namespace al {
 class LayoutInitInfo;
@@ -22,6 +29,7 @@ class StageSceneStateOption : public al::HostStateBase<al::Scene>, public al::IU
 public:
     StageSceneStateOption(const char*, al::Scene*, const al::LayoutInitInfo&, FooterParts*,
                           GameDataHolder*, bool);
+    ~StageSceneStateOption() override;
 
     void updateConfigDataInfo(const GameConfigData*);
     void killAllLayouts();
@@ -73,18 +81,18 @@ public:
     bool isLoadData() const { return mIsLoadData; }
 
 private:
-    void* field_28;
-    void* field_30;
-    void* field_38;
-    char* field_40;
-    char* field_48;
+    const al::Nerve* field_28;
+    SimpleLayoutMenu* field_30;
+    CommonVerticalList* field_38;
+    const char* field_40;
+    const char* field_48;
     bool field_50;
     bool field_51;
     FooterParts* mFooterParts;
-    void* field_60;
+    al::WindowConfirm* field_60;
     SimpleLayoutMenu* field_68;
     CommonVerticalList* field_70;
-    al::SimpleLayoutAppearWaitEnd* field_78;
+    SimpleLayoutMenu* field_78;
     CommonVerticalList* field_80;
     SimpleLayoutMenu* field_88;
     CommonVerticalList* field_90;
@@ -95,17 +103,18 @@ private:
     SimpleLayoutMenu* field_b8;
     CommonVerticalList* field_c0;
     SimpleLayoutMenu* field_c8;
-    void* field_d0;
+    bool field_d0;
+    u8 field_d1[7];
     WindowConfirmData* field_d8;
     SimpleLayoutMenu* field_e0;
     CommonVerticalList* field_e8;
-    void* field_f0;
-    void* field_f8;
-    void* field_100;
-    void* field_108;
-    void* field_110;
-    void* field_118;
-    void* field_120;
+    sead::WFixedSafeString<512>* field_f0;
+    sead::WFixedSafeString<512>* field_f8;
+    sead::WFixedSafeString<512>* field_100;
+    sead::WFixedSafeString<512>* field_108;
+    sead::WFixedSafeString<512>* field_110;
+    nn::ui2d::TextureInfo** field_118;
+    nn::ui2d::TextureInfo* field_120;
     void* field_128;
     void* field_130;
     void* field_138;
@@ -122,3 +131,5 @@ private:
     al::MessageSystem* mMessageSystem;
     InputSeparator* mInputSeperator;
 };
+
+static_assert(sizeof(StageSceneStateOption) == 0x198);

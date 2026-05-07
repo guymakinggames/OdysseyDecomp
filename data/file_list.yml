@@ -53662,12 +53662,12 @@ Layout/HackListLayout.o:
   - offset: 0x1eda34
     size: 4
     label: _ZN4sead16WFixedSafeStringILi512EED0Ev
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x1eda38
     size: 216
     label: _ZN4sead16WFixedSafeStringILi512EEaSERKNS_14SafeStringBaseIDsEE
-    status: NotDecompiled
+    status: Matching
     lazy: true
 Layout/HardIconParts.o:
   '.text':
@@ -140440,11 +140440,11 @@ Scene/StageSceneStateOption.o:
     label:
     - _ZN21StageSceneStateOptionC1EPKcPN2al5SceneERKNS2_14LayoutInitInfoEP11FooterPartsP14GameDataHolderb
     - _ZN21StageSceneStateOptionC2EPKcPN2al5SceneERKNS2_14LayoutInitInfoEP11FooterPartsP14GameDataHolderb
-    status: NotDecompiled
+    status: NonMatchingMajor
   - offset: 0x4e55b8
     size: 476
     label: _ZN21StageSceneStateOption20updateConfigDataInfoEPK14GameConfigData
-    status: NotDecompiled
+    status: NonMatchingMajor
   - offset: 0x4e5794
     size: 632
     label: _ZN4sead10StrTreeMapILi32EPN2nn4ui2d11TextureInfoEE6insertERKNS_14SafeStringBaseIcEERKS4_
@@ -140453,35 +140453,35 @@ Scene/StageSceneStateOption.o:
   - offset: 0x4e5a0c
     size: 208
     label: _ZN21StageSceneStateOption14killAllLayoutsEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x4e5adc
     size: 20
     label: _ZN21StageSceneStateOption4initEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x4e5af0
     size: 136
     label: _ZN21StageSceneStateOption6appearEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x4e5b78
     size: 228
     label: _ZN21StageSceneStateOption4killEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x4e5c5c
     size: 16
     label: _ZNK21StageSceneStateOption15isModeSelectEndEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x4e5c6c
     size: 12
     label: _ZNK21StageSceneStateOption17getSelectedFileIdEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x4e5c78
     size: 32
     label: _ZNK21StageSceneStateOption16isChangeLanguageEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x4e5c98
     size: 452
     label: _ZN21StageSceneStateOption12exeOptionTopEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x4e5e5c
     size: 204
     label: ''
@@ -140489,103 +140489,103 @@ Scene/StageSceneStateOption.o:
   - offset: 0x4e5f28
     size: 156
     label: _ZN21StageSceneStateOption6decideEPKN2al5NerveEP16SimpleLayoutMenuP18CommonVerticalList
-    status: NotDecompiled
+    status: Matching
   - offset: 0x4e5fc4
     size: 920
     label: _ZN21StageSceneStateOption22exeModeSelectSelectingEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x4e635c
     size: 148
     label: _ZN21StageSceneStateOption11openConfirmEPKN2al5NerveEP16SimpleLayoutMenuP18CommonVerticalList
-    status: NotDecompiled
+    status: Matching
   - offset: 0x4e63f0
     size: 156
     label: _ZN21StageSceneStateOption6cancelEPKN2al5NerveEP16SimpleLayoutMenuP18CommonVerticalList
-    status: NotDecompiled
+    status: Matching
   - offset: 0x4e648c
     size: 788
     label: _ZN21StageSceneStateOption28exeModeSelectSelectingByHelpEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x4e67a0
     size: 764
     label: _ZN21StageSceneStateOption25exeModeSelectConfirmYesNoEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x4e6a9c
     size: 4
     label: _ZN21StageSceneStateOption23exeModeSelectConfirmEndEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x4e6aa0
     size: 608
     label: _ZN21StageSceneStateOption9exeConfigEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x4e6d00
     size: 340
     label: _ZN21StageSceneStateOption9endConfigEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x4e6e54
     size: 548
     label: _ZN21StageSceneStateOption14exeDataManagerEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x4e7078
     size: 1080
     label: _ZN21StageSceneStateOption20exeSaveDataSelectingEv
-    status: NotDecompiled
+    status: NonMatchingMajor
   - offset: 0x4e74b0
     size: 1452
     label: _ZN21StageSceneStateOption18updateSaveDataInfoEb
-    status: NotDecompiled
+    status: NonMatchingMajor
   - offset: 0x4e7a5c
     size: 228
     label: _ZN21StageSceneStateOption23exeSaveDataConfirmYesNoEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x4e7b40
     size: 68
     label: _ZN21StageSceneStateOption17exeSaveDataSavingEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x4e7b84
     size: 712
     label: _ZN21StageSceneStateOption16exeSaveDataSavedEv
-    status: NotDecompiled
+    status: NonMatchingMajor
   - offset: 0x4e7e4c
     size: 764
     label: _ZN21StageSceneStateOption20exeLoadDataSelectingEv
-    status: NotDecompiled
+    status: NonMatchingMajor
   - offset: 0x4e8148
     size: 172
     label: _ZN21StageSceneStateOption20exeLoadDataConfirmNgEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x4e81f4
     size: 168
     label: _ZN21StageSceneStateOption23exeLoadDataConfirmYesNoEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x4e829c
     size: 76
     label: _ZN21StageSceneStateOption17exeLoadDataSavingEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x4e82e8
     size: 808
     label: _ZN21StageSceneStateOption22exeDeleteDataSelectingEv
-    status: NotDecompiled
+    status: NonMatchingMajor
   - offset: 0x4e8610
     size: 172
     label: _ZN21StageSceneStateOption22exeDeleteDataConfirmNgEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x4e86bc
     size: 168
     label: _ZN21StageSceneStateOption25exeDeleteDataConfirmYesNoEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x4e8764
     size: 92
     label: _ZN21StageSceneStateOption21exeDeleteDataDeletingEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x4e87c0
     size: 384
     label: _ZN21StageSceneStateOption20exeDeleteDataDeletedEv
-    status: NotDecompiled
+    status: NonMatchingMajor
   - offset: 0x4e8940
     size: 3020
     label: _ZN21StageSceneStateOption18exeLanguageSettingEv
-    status: NotDecompiled
+    status: NonMatchingMajor
   - offset: 0x4e950c
     size: 444
     label: ''
@@ -140593,176 +140593,176 @@ Scene/StageSceneStateOption.o:
   - offset: 0x4e96c8
     size: 300
     label: _ZN21StageSceneStateOption30exeLanguageSettingConfirmYesNoEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x4e97f4
     size: 144
     label: _ZN21StageSceneStateOption20exeWaitEndDecideAnimEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x4e9884
     size: 124
     label: _ZN21StageSceneStateOption31exeWaitEndDecideAnimAndAutoSaveEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x4e9900
     size: 332
     label: _ZN21StageSceneStateOption18exeWaitEndAutoSaveEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x4e9a4c
     size: 208
     label: _ZN21StageSceneStateOption8exeCloseEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x4e9b1c
     size: 104
     label: _ZN21StageSceneStateOption11changeNerveEPKN2al5NerveEP16SimpleLayoutMenuP18CommonVerticalList
-    status: NotDecompiled
+    status: Matching
   - offset: 0x4e9b84
     size: 36
     label: _ZN21StageSceneStateOptionD0Ev
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x4e9ba8
     size: 8
     label: _ZNK21StageSceneStateOption16getMessageSystemEv
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x4e9bb0
     size: 8
     label: _ZThn32_NK21StageSceneStateOption16getMessageSystemEv
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x4e9bb8
     size: 8
     label: _ZNK12_GLOBAL__N_143StageSceneStateOptionNrvModeSelectSelecting7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x4e9bc0
     size: 8
     label: _ZNK12_GLOBAL__N_135StageSceneStateOptionNrvDataManager7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x4e9bc8
     size: 8
     label: _ZNK12_GLOBAL__N_130StageSceneStateOptionNrvConfig7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x4e9bd0
     size: 8
     label: _ZNK12_GLOBAL__N_130StageSceneStateOptionNrvConfig12executeOnEndEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x4e9bd8
     size: 8
     label: _ZNK12_GLOBAL__N_139StageSceneStateOptionNrvLanguageSetting7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x4e9be0
     size: 8
     label: _ZNK12_GLOBAL__N_141StageSceneStateOptionNrvSaveDataSelecting7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x4e9be8
     size: 8
     label: _ZNK12_GLOBAL__N_141StageSceneStateOptionNrvLoadDataSelecting7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x4e9bf0
     size: 8
     label: _ZNK12_GLOBAL__N_143StageSceneStateOptionNrvDeleteDataSelecting7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x4e9bf8
     size: 8
     label: _ZNK12_GLOBAL__N_133StageSceneStateOptionNrvOptionTop7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x4e9c00
     size: 8
     label: _ZNK12_GLOBAL__N_149StageSceneStateOptionNrvModeSelectSelectingByHelp7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x4e9c08
     size: 8
     label: _ZNK12_GLOBAL__N_151StageSceneStateOptionNrvLanguageSettingConfirmYesNo7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x4e9c10
     size: 4
     label: _ZNK12_GLOBAL__N_144StageSceneStateOptionNrvModeSelectConfirmEnd7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x4e9c14
     size: 8
     label: _ZNK12_GLOBAL__N_129StageSceneStateOptionNrvClose7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x4e9c1c
     size: 8
     label: _ZNK12_GLOBAL__N_146StageSceneStateOptionNrvModeSelectConfirmYesNo7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x4e9c24
     size: 8
     label: _ZNK12_GLOBAL__N_144StageSceneStateOptionNrvSaveDataConfirmYesNo7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x4e9c2c
     size: 68
     label: _ZNK12_GLOBAL__N_138StageSceneStateOptionNrvSaveDataSaving7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x4e9c70
     size: 8
     label: _ZNK12_GLOBAL__N_137StageSceneStateOptionNrvSaveDataSaved7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: NonMatchingMajor
     guess: true
   - offset: 0x4e9c78
     size: 8
     label: _ZNK12_GLOBAL__N_141StageSceneStateOptionNrvLoadDataConfirmNg7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x4e9c80
     size: 8
     label: _ZNK12_GLOBAL__N_144StageSceneStateOptionNrvLoadDataConfirmYesNo7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x4e9c88
     size: 80
     label: _ZNK12_GLOBAL__N_138StageSceneStateOptionNrvLoadDataSaving7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x4e9cd8
     size: 8
     label: _ZNK12_GLOBAL__N_143StageSceneStateOptionNrvDeleteDataConfirmNg7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x4e9ce0
     size: 8
     label: _ZNK12_GLOBAL__N_146StageSceneStateOptionNrvDeleteDataConfirmYesNo7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x4e9ce8
     size: 96
     label: _ZNK12_GLOBAL__N_142StageSceneStateOptionNrvDeleteDataDeleting7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x4e9d48
     size: 8
     label: _ZNK12_GLOBAL__N_141StageSceneStateOptionNrvDeleteDataDeleted7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: NonMatchingMajor
     guess: true
   - offset: 0x4e9d50
     size: 8
     label: _ZNK12_GLOBAL__N_139StageSceneStateOptionNrvWaitEndAutoSave7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x4e9d58
     size: 8
     label: _ZNK12_GLOBAL__N_152StageSceneStateOptionNrvWaitEndDecideAnimAndAutoSave7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x4e9d60
     size: 8
     label: _ZNK12_GLOBAL__N_141StageSceneStateOptionNrvWaitEndDecideAnim7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x4e9d68
     size: 4
@@ -212222,7 +212222,7 @@ Util/YoshiUtil.o:
   - offset: 0x786d38
     size: 224
     label: _ZN4sead21FormatFixedSafeStringILi64EEC2EPKcz
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x786e18
     size: 224
@@ -212331,7 +212331,7 @@ Util/YoshiUtil.o:
   - offset: 0x788fd8
     size: 4
     label: _ZN4sead21FormatFixedSafeStringILi64EED0Ev
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x788fdc
     size: 4
