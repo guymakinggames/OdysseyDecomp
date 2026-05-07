@@ -35,6 +35,8 @@ public:
     void updateAfterScene();
     void requestSystemInitialize();
     bool isAvailable() const;
+private:
+    char filler[0x48];
 };
 
 } // namespace al

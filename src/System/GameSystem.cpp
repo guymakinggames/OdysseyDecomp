@@ -1,9 +1,11 @@
 #include "System/GameSystem.h"
 
+#include <gfx/nin/seadGraphicsNvn.h>
 #include <heap/seadExpHeap.h>
 #include <nn/audio.h>
 #include <nn/friends.h>
 
+#include "Library/Application/ApplicationMessageReceiver.h"
 #include "Library/Audio/AudioInfo.h"
 #include "Library/Audio/AudioLoadGroup.h"
 #include "Library/Audio/System/AudioKeeperFunction.h"
@@ -71,49 +73,39 @@ GameSystem::~GameSystem() {
 void GameSystem::init() {
     mSystemInfo = new al::GameSystemInfo;
     mSystemInfo->drawSystemInfo = Application::instance()->getDrawSystemInfo();
-    mGameConfigData = new GameConfigData;
+
+    mGameConfigData = new GameConfigData();
     initNerve(&NrvGameSystem.Play);
+
     mAccountHolder = Application::instance()->getAccountHolder();
     nn::friends::Initialize();
+
     mNetworkSystem = new al::NetworkSystem(mAccountHolder->getUserHandle(), true);
     mNetworkSystem->requestSystemInitialize();
-    mSystemInfo->networkSystem = mNetworkSystem;
-    mHtmlViewer = new al::HtmlViewer;
+    mSystemInfo->setNetworkSystem(mNetworkSystem);
+
+    mHtmlViewer = new al::HtmlViewer();
     mSystemInfo->htmlViewer = mHtmlViewer;
-    mNfpDirector = new ProjectNfpDirector;
+
+    mNfpDirector = new ProjectNfpDirector();
     mSystemInfo->nfpDirector = mNfpDirector;
     mNfpDirector->initialize();
 
-    sead::ExpHeap* heap = sead::ExpHeap::create(
-        0x4600000, "", nullptr, 8, sead::Heap::HeapDirection::cHeapDirection_Forward, false);
+    sead::ExpHeap* heap =
+        sead::ExpHeap::create(0x4600000, "EffectSystemHeap", nullptr, 8,
+                              sead::Heap::HeapDirection::cHeapDirection_Forward, false);
     al::addNamedHeap(heap, "EffectSystemHeap");
 
     al::EffectSystem* effectSystem =
         al::EffectSystem::createSystem(mSystemInfo->drawSystemInfo->drawContext, heap);
-    mSystemInfo->effectSystem = effectSystem;
+    mSystemInfo->setEffectSystem(effectSystem);
 
-    mSystemInfo->layoutSystem = new al::LayoutSystem;
+    al::LayoutSystem* layoutSystem = new al::LayoutSystem;
+    layoutSystem->init();
+    mSystemInfo->layoutSystem = layoutSystem;
     mSystemInfo->messageSystem = new al::MessageSystem;
 
-    al::AudioSystemInitInfo audioSystemInitInfo{
-        .seBgmName = nullptr,
-        .unk1 = true,
-        .unk2 = true,
-        .isBgmOnSameMixIndex = false,
-        .masterVolume = 1.0f,
-        .dockedVolume = 1.0f,
-        .unk4 = 0,
-        .useAudioMaximizer = false,
-        .changeInputBgmChannelVolume = false,
-        .cacheSizePerSound = 0,
-        .undockedVolume = 1.0f,
-        .systemHeapSize = -1,
-        .monoVolume = 1.0f,
-        .stereoVolume = 1.0f,
-        .materialCodeList = nullptr,
-        .materialCodePrefixList = nullptr,
-    };
-
+    al::AudioSystemInitInfo audioSystemInitInfo;
     al::CollisionCodeList* materialCode =
         alCollisionCodeFunction::tyrCreateCollisionCodeList("MaterialCode");
     al::CollisionCodeList* materialCodePrefix =
@@ -121,56 +113,123 @@ void GameSystem::init() {
 
     mSystemInfo->effectSystem->setMaterialCodeList(materialCode);
     mSystemInfo->effectSystem->setMaterialCodePrefix(materialCodePrefix);
+    audioSystemInitInfo.setMaterialCode(materialCode, materialCodePrefix);
 
-    audioSystemInitInfo = {
-        .dockedVolume = 0.401f,
-        .undockedVolume = 1.0f,
-        .unk2 = true,
-        .isBgmOnSameMixIndex = true,
-        .changeInputBgmChannelVolume = true,
-        .seDataName = "SeData",
-        .seBgmName = "BgmData",
-        .monoVolume = 0.3f,
-        .stereoVolume = 1.061f,
-        .cacheSizePerSound = 0x40000,
-        .materialCodeList = materialCode,
-        .materialCodePrefixList = materialCodePrefix,
-    };
+    audioSystemInitInfo.seDataName = "SeData";
+    audioSystemInitInfo.seBgmName = "BgmData";
+    audioSystemInitInfo.dockedVolume = 0.401f;
+    audioSystemInitInfo.undockedVolume = 1.0f;
+    audioSystemInitInfo.unk2 = true;
+    audioSystemInitInfo.isBgmOnSameMixIndex = true;
+    audioSystemInitInfo.useAudioMaximizer = true;
+    audioSystemInitInfo.changeInputBgmChannelVolume = true;
+    audioSystemInitInfo.monoVolume = 0.3f;
+    audioSystemInitInfo.stereoVolume = 1.061f;
+    audioSystemInitInfo.cacheSizePerSound = 0x40000;
 
-    sead::Heap* audioHeap = al::tryFindNamedHeap("AudioHeap");
-    u64 audioHeapSize = 0;
-    if (audioHeap)
-        audioHeapSize = audioHeap->getSize();
-    mAudioSystem = new al::AudioSystem;
+    audioSystemInitInfo.setHeapSize(al::tryFindNamedHeap("AudioHeap"));
+
+    mAudioSystem = new al::AudioSystem();
     mAudioSystem->init(audioSystemInitInfo);
 
-    al::SeadAudioPlayer* audioPlayerForSe =
-        alAudioSystemFunction::getSeadAudioPlayerForSe(mAudioSystem);
-    al::SeadAudioPlayer* audioPlayerForBgm =
-        alAudioSystemFunction::getSeadAudioPlayerForBgm(mAudioSystem);
+    al::setAudioPlayerToResourceSystem(
+        alAudioSystemFunction::getSeadAudioPlayerForSe(mAudioSystem),
+        alAudioSystemFunction::getSeadAudioPlayerForBgm(mAudioSystem));
 
-    al::setAudioPlayerToResourceSystem(audioPlayerForSe, audioPlayerForBgm);
-    mAudioInfoList = new al::AudioInfoListWithParts<al::AudioResourceLoadGroupInfo>;
+    al::AudioInfoListWithParts<al::AudioResourceLoadGroupInfo>* groupList =
+        new al::AudioInfoListWithParts<al::AudioResourceLoadGroupInfo>;
+    groupList->init(2, 0);
+    mAudioInfoList = groupList;
 
-    al::AudioResourceLoadGroupInfo* audioResourceLoadGroupInfo = new al::AudioResourceLoadGroupInfo;
-    audioResourceLoadGroupInfo->name = "システム常駐";
-    al::AudioLoadGroupList* audioLoadGroupList = new al::AudioLoadGroupList;
-    audioLoadGroupList->unk2 = nullptr;
-    audioLoadGroupList->unk1 = new sead::PtrArray<al::AudioResourceLoadInfo>(0, nullptr);
-    audioLoadGroupList->unk1->allocBuffer(1, nullptr, 8);
-    audioLoadGroupList->resourceLoadInfos = nullptr;
-    audioResourceLoadGroupInfo->unk1 = audioLoadGroupList;
+    al::AudioResourceLoadGroupInfo* loadInfo = new al::AudioResourceLoadGroupInfo();
+    loadInfo->name = "システム常駐";
 
-    audioLoadGroupList = new al::AudioLoadGroupList;
-    audioLoadGroupList->unk2 = nullptr;
-    audioLoadGroupList->unk1 = new sead::PtrArray<al::AudioResourceLoadInfo>(0, nullptr);
-    audioLoadGroupList->unk1->allocBuffer(1, nullptr, 8);
-    audioResourceLoadGroupInfo->unk1->resourceLoadInfos = nullptr;
-    audioResourceLoadGroupInfo->unk2 = audioLoadGroupList;
+    al::AudioInfoListWithParts<al::AudioResourceLoadInfo>* userInfoList =
+        new al::AudioInfoListWithParts<al::AudioResourceLoadInfo>;
+    userInfoList->init(1, 0);
+    loadInfo->userManagementGroupLoadInfoList = userInfoList;
 
-    al::AudioResourceLoadInfo* audioResourceLoadInfo = new al::AudioResourceLoadInfo;
-    audioResourceLoadInfo->name = "SeResourceStdSystem";
-    audioResourceLoadInfo->unk1 = false;
+    al::AudioInfoListWithParts<al::AudioResourceLoadInfo>* addonInfoList =
+        new al::AudioInfoListWithParts<al::AudioResourceLoadInfo>;
+    addonInfoList->init(1, 0);
+    auto* copy = loadInfo->userManagementGroupLoadInfoList;
+    loadInfo->addonSoundArchiveLoadInfoList = addonInfoList;
+
+    al::AudioResourceLoadInfo* strSystemInfo = new al::AudioResourceLoadInfo;
+    strSystemInfo->setName("SeResourceStdSystem", false);
+    if (copy)
+        al::trySetAudioInfo2(userInfoList, strSystemInfo, false);
+
+    auto* copy2 = loadInfo->addonSoundArchiveLoadInfoList;
+    al::AudioResourceLoadInfo* testSEInfo = new al::AudioResourceLoadInfo;
+    testSEInfo->setName("TestSE", false);
+    if (copy2)
+        al::trySetAudioInfo2(addonInfoList, testSEInfo, false);
+
+    al::trySetAudioInfo(mAudioInfoList, loadInfo, false);
+
+    al::AudioResourceLoadGroupInfo* nextGroupList = new al::AudioResourceLoadGroupInfo;
+    nextGroupList->name = "システム常駐以外の常駐";
+
+    al::AudioInfoListWithParts<al::AudioResourceLoadInfo>* findout =
+        new al::AudioInfoListWithParts<al::AudioResourceLoadInfo>;
+    findout->init(5, 0);
+    nextGroupList->userManagementGroupLoadInfoList = findout;
+    nextGroupList->addonSoundArchiveLoadInfoList = nullptr;
+
+    al::AudioResourceLoadInfo* Std1stInfo = new al::AudioResourceLoadInfo;
+    Std1stInfo->setName("SeResourceStd1st", false);
+    al::trySetAudioInfo2(findout, Std1stInfo, false);
+
+    auto* copy3 = loadInfo->userManagementGroupLoadInfoList;
+    al::AudioResourceLoadInfo* Std2stInfo = new al::AudioResourceLoadInfo;
+    Std2stInfo->setName("SeResourceStd2nd", false);
+    if (copy3)
+        al::trySetAudioInfo2(findout, Std2stInfo, false);
+
+    auto* copy4 = loadInfo->userManagementGroupLoadInfoList;
+    al::AudioResourceLoadInfo* bgmStd1stInfo = new al::AudioResourceLoadInfo;
+    bgmStd1stInfo->setName("BgmResourceStd1st", true);
+    if (copy4)
+        al::trySetAudioInfo2(findout, bgmStd1stInfo, false);
+
+    auto* copy5 = loadInfo->userManagementGroupLoadInfoList;
+    al::AudioResourceLoadInfo* bgmStd2stInfo = new al::AudioResourceLoadInfo();
+    bgmStd2stInfo->setName("BgmResourceStd2nd", true);
+    if (copy5)
+        al::trySetAudioInfo2(findout, bgmStd2stInfo, false);
+
+    auto* copy6 = loadInfo->userManagementGroupLoadInfoList;
+    al::AudioResourceLoadInfo* prefetch = new al::AudioResourceLoadInfo();
+    prefetch->setName("BgmResourceStdPrefetch", true);
+    if (copy6)
+        al::trySetAudioInfo2(findout, prefetch, false);
+
+    al::trySetAudioInfo(mAudioInfoList, nextGroupList, false);
+
+    alAudioSystemFunction::loadAudioResource(
+        "システム常駐", mAudioInfoList,
+        alAudioSystemFunction::getSeadAudioPlayerForSe(mAudioSystem),
+        alAudioSystemFunction::getSeadAudioPlayerForBgm(mAudioSystem));
+    mSystemInfo->audioSystem = mAudioSystem;
+    mGamePadSystem = new al::GamePadSystem();
+
+    setPadName();
+
+    mSystemInfo->setGamePadSystem(mGamePadSystem);
+    mGamePadSystem->setAudioSystem(mAudioSystem);
+    mWaveVibrationHolder = new al::WaveVibrationHolder(mGamePadSystem);
+    mSystemInfo->waveVibrationHolder = mWaveVibrationHolder;
+    mAudioSystem->addAudiioFrameProccess(mWaveVibrationHolder);
+
+    mApplicationMessageReceiver = new al::ApplicationMessageReceiver();
+    mApplicationMessageReceiver->init();
+    mSystemInfo->setApplicationMessageReceiver(mApplicationMessageReceiver);
+    al::setGpuPerformance(al::GpuPerformance::unk3, nn::oe::PerformanceMode_Normal);
+    al::createSequenceHeap();
+    tryChangeSequence("HakoniwaSequence");
+    nn::oe::FinishStartupLogo();
+    Application::instance()->getGameFramework()->requestChangeUseGPU(true);
 }
 
 void GameSystem::setPadName() {
@@ -213,6 +272,51 @@ bool GameSystem::tryChangeSequence(const char* name) {
     }
 
     return true;
+}
+
+void GameSystem::movement() {
+    mApplicationMessageReceiver->update();
+
+    if (mApplicationMessageReceiver)
+        mGamePadSystem->setInvalidateDisconnectFrame(600);
+    mGamePadSystem->update();
+
+    if (mNetworkSystem)
+        mNetworkSystem->updateBeforeScene();
+
+    if (mApplicationMessageReceiver->mPerformanceMode == 1) {
+        sead::GraphicsNvn::instance()->setDisplayBufferWindowCrop(0, 0, 1600, 900);
+        // Application::instance()->isDocked(true);
+        mSystemInfo->drawSystemInfo->isDocked = true;
+    } else {
+        sead::GraphicsNvn::instance()->setDisplayBufferWindowCrop(0, 0, 1280, 720);
+        // Application::instance()->isDocked(false);
+        mSystemInfo->drawSystemInfo->isDocked = false;
+    }
+
+    updateNerve();
+    mAudioSystem->update();
+    if (mNetworkSystem)
+        mNetworkSystem->updateAfterScene();
+
+    if (!mSequence->isAlive()) {
+        if (al::isEqualString("HakoniwaSequence", mSequence->getName())) {
+            GameDataHolder* gameDataHolder =
+                static_cast<HakoniwaSequence*>(mSequence)->getGameDataHolder();
+            gameDataHolder->setSeparatePlay(mIsSinglePlay);
+            mIsSequenceSetupIncomplete = true;
+            *mGameConfigData = *gameDataHolder->getGameConfigData();
+        }
+    }
+
+    mSystemInfo->layoutSystem->prepareInitFontForChangeLanguage();
+    al::removeResourceCategory("常駐[ローカライズ]");
+
+    al::addResourceCategory("常駐[ローカライズ]", 80, al::findNamedHeap("LocalizeResourceHeap"));
+    al::createCategoryResourceAll("常駐[ローカライズ]");
+    mSystemInfo->layoutSystem->initFontForChangeLanguage();
+    mSystemInfo->messageSystem->initMessageForChangeLanguage();
+    tryChangeSequence("HakoniwaSequence");
 }
 
 void GameSystem::drawMain() {

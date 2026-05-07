@@ -9,7 +9,8 @@ class WaveVibrationHolder : public al::HioNode, public aal::IAudioFrameProcess {
 public:
     WaveVibrationHolder(const al::GamePadSystem*);
 
-private:
+    private:
+    char filler[0xd8];
 };
 
 }  // namespace al

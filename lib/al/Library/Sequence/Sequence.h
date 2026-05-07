@@ -46,7 +46,11 @@ public:
     void initDrawSystemInfo(const SequenceInitInfo&);
     AudioSystemInfo* getAudioSystemInfo();
 
+    const sead::FixedSafeString<0x40>& getName() const { return mName; }
+
     DrawSystemInfo* getDrawInfo() const { return mDrawSystemInfo; }
+
+    bool isAlive() const { return mIsAlive; }
 
 private:
     sead::FixedSafeString<0x40> mName;

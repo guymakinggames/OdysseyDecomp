@@ -29,6 +29,9 @@ public:
     void reinitFont(sead::Heap*);
     void beginDraw() const;
     void endDraw() const;
+
+private:
+    char filler[0x30];
 };
 
 class LayoutKit {

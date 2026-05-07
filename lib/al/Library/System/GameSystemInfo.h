@@ -2,6 +2,8 @@
 
 #include <basis/seadTypes.h>
 #include <common/aglRenderBuffer.h>
+#include <nn/oe.h>
+
 
 namespace al {
 class EffectSystem;
@@ -24,6 +26,13 @@ struct DrawSystemInfo {
 };
 
 struct GameSystemInfo {
+    GameSystemInfo();
+
+    void setNetworkSystem(NetworkSystem* system){networkSystem=system;};
+    void setEffectSystem(EffectSystem* system){effectSystem=system;};
+    void setGamePadSystem(GamePadSystem* system){gamePadSystem=system;};
+    void setApplicationMessageReceiver(ApplicationMessageReceiver* receiver){applicationMessageReceiver=receiver;};
+
     AudioSystem* audioSystem;
     EffectSystem* effectSystem;
     LayoutSystem* layoutSystem;
@@ -38,5 +47,13 @@ struct GameSystemInfo {
     ApplicationMessageReceiver* applicationMessageReceiver;
     WaveVibrationHolder* waveVibrationHolder;
 };
+
+enum class GpuPerformance {
+    unk1 = 0,
+    unk2 = 1,
+    unk3 = 2
+};
+
+void setGpuPerformance(GpuPerformance, nn::oe::PerformanceMode);
 
 }  // namespace al

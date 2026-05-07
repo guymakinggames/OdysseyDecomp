@@ -14,7 +14,7 @@ public:
     void procMessage(u32 message);
     void update();
 
-private:
+public:
     bool mIsUpdatedOperationMode = false;
     bool mIsUpdatedPerformanceMode = false;
     nn::oe::OperationMode mOperationMode = nn::oe::OperationMode_Handheld;

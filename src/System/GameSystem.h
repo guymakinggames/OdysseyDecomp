@@ -51,6 +51,8 @@ private:
     bool mIsSequenceSetupIncomplete = false;
 };
 
+static_assert(sizeof(GameSystem) == 0x88);
+
 namespace GameSystemFunction {
 GameSystem* getGameSystem();
-} // namespace GameSystemFunction
+}  // namespace GameSystemFunction

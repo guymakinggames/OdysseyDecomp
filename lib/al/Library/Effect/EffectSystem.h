@@ -97,9 +97,9 @@ private:
     bool _68;
     bool _69;
     bool _6a;
-    void* filler2[12];
+    void* filler2[97];
     CollisionCodeList* mMaterialCodePrefix;
-    void* filler3[86];
+    void* filler3;
     s32 mEffectLayoutDrawerSize;
     EffectLayoutDrawer** mEffectLayoutDrawerList;
     EffectShaderHolder* mEffectShaderHolder;

@@ -1,11 +1,20 @@
 #pragma once
-#include "container/seadPtrArray.h"
+#include <container/seadPtrArray.h>
+
+#include "Library/Audio/AudioInfo.h"
 
 namespace al {
 
 struct AudioResourceLoadInfo {
-    const char* name;
-    bool unk1;
+    AudioResourceLoadInfo();
+
+    void setName(const char* named,bool kek){
+        name=named;
+        isBgm=kek;
+    }
+
+    const char* name=nullptr;
+    bool isBgm=false;
 
     static sead::PtrArray<AudioResourceLoadInfo>::CompareCallback compareInfo;
 };
@@ -17,9 +26,14 @@ struct AudioLoadGroupList {
 };
 
 struct AudioResourceLoadGroupInfo {
-    const char* name;
-    AudioLoadGroupList* unk1;
-    AudioLoadGroupList* unk2;
+    AudioResourceLoadGroupInfo();
+
+    static AudioResourceLoadGroupInfo* createInfo(const ByamlIter& iter);
+    static s32 compareInfo(const AudioResourceLoadGroupInfo* lhs, const AudioResourceLoadGroupInfo* rhs);
+
+    const char* name=nullptr;
+    al::AudioInfoListWithParts<al::AudioResourceLoadInfo>* userManagementGroupLoadInfoList=nullptr;
+    al::AudioInfoListWithParts<al::AudioResourceLoadInfo>* addonSoundArchiveLoadInfoList=nullptr;
 };
 
 } // namespace al
