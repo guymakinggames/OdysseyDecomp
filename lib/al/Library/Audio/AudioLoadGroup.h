@@ -1,4 +1,5 @@
 #pragma once
+
 #include <container/seadPtrArray.h>
 
 #include "Library/Audio/AudioInfo.h"
@@ -8,15 +9,15 @@ namespace al {
 struct AudioResourceLoadInfo {
     AudioResourceLoadInfo();
 
-    void setName(const char* named,bool kek){
-        name=named;
-        isBgm=kek;
+    void setName(const char* named, bool kek) {
+        name = named;
+        isBgm = kek;
     }
 
-    const char* name=nullptr;
-    bool isBgm=false;
+    const char* name = nullptr;
+    bool isBgm = false;
 
-    static sead::PtrArray<AudioResourceLoadInfo>::CompareCallback compareInfo;
+    static s32 compareInfo(const AudioResourceLoadInfo* lhs, const AudioResourceLoadInfo* rhs);
 };
 
 struct AudioLoadGroupList {
@@ -29,11 +30,12 @@ struct AudioResourceLoadGroupInfo {
     AudioResourceLoadGroupInfo();
 
     static AudioResourceLoadGroupInfo* createInfo(const ByamlIter& iter);
-    static s32 compareInfo(const AudioResourceLoadGroupInfo* lhs, const AudioResourceLoadGroupInfo* rhs);
+    static s32 compareInfo(const AudioResourceLoadGroupInfo* lhs,
+                           const AudioResourceLoadGroupInfo* rhs);
 
-    const char* name=nullptr;
-    al::AudioInfoListWithParts<al::AudioResourceLoadInfo>* userManagementGroupLoadInfoList=nullptr;
-    al::AudioInfoListWithParts<al::AudioResourceLoadInfo>* addonSoundArchiveLoadInfoList=nullptr;
+    const char* name = nullptr;
+    AudioInfoListWithParts<AudioResourceLoadInfo>* userManagementGroupLoadInfoList = nullptr;
+    AudioInfoListWithParts<AudioResourceLoadInfo>* addonSoundArchiveLoadInfoList = nullptr;
 };
 
-} // namespace al
+}  // namespace al

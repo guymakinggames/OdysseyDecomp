@@ -15,6 +15,7 @@
 #include "Library/Controller/GamePadSystem.h"
 #include "Library/Controller/GamePadWaveVibrationData.h"
 #include "Library/Effect/EffectSystem.h"
+#include "Library/File/FileUtil.h"
 #include "Library/Framework/GameFrameworkNx.h"
 #include "Library/Layout/LayoutSystem.h"
 #include "Library/LiveActor/ActorSensorUtil.h"
@@ -33,14 +34,17 @@
 #include "Library/Sequence/Sequence.h"
 #include "Library/System/GameSystemInfo.h"
 
-#include "Application.h"
-#include "GameConfigData.h"
-#include "ProjectNfpDirector.h"
 #include "Sequence/HakoniwaSequence.h"
 #include "Sequence/SequenceFactory.h"
+#include "System/Application.h"
+#include "System/GameConfigData.h"
 #include "System/GameDataHolder.h"
+#include "System/ProjectNfpDirector.h"
 
 namespace {
+void setDisplayBufferWindowCrop(sead::Graphics* graphics, s32 x, s32 y, s32 width, s32 height)
+    asm("_ZN4sead11GraphicsNvn26setDisplayBufferWindowCropEiiii");
+
 NERVE_IMPL(GameSystem, Play);
 
 NERVES_MAKE_STRUCT(GameSystem, Play);
@@ -158,15 +162,15 @@ void GameSystem::init() {
     al::AudioResourceLoadInfo* strSystemInfo = new al::AudioResourceLoadInfo;
     strSystemInfo->setName("SeResourceStdSystem", false);
     if (copy)
-        al::trySetAudioInfo2(userInfoList, strSystemInfo, false);
+        al::trySetAudioInfo2(copy, strSystemInfo, false);
 
     auto* copy2 = loadInfo->addonSoundArchiveLoadInfoList;
     al::AudioResourceLoadInfo* testSEInfo = new al::AudioResourceLoadInfo;
     testSEInfo->setName("TestSE", false);
     if (copy2)
-        al::trySetAudioInfo2(addonInfoList, testSEInfo, false);
+        al::trySetAudioInfo2(copy2, testSEInfo, false);
 
-    al::trySetAudioInfo(mAudioInfoList, loadInfo, false);
+    al::trySetAudioInfo(groupList, loadInfo, false);
 
     al::AudioResourceLoadGroupInfo* nextGroupList = new al::AudioResourceLoadGroupInfo;
     nextGroupList->name = "システム常駐以外の常駐";
@@ -181,31 +185,31 @@ void GameSystem::init() {
     Std1stInfo->setName("SeResourceStd1st", false);
     al::trySetAudioInfo2(findout, Std1stInfo, false);
 
-    auto* copy3 = loadInfo->userManagementGroupLoadInfoList;
+    auto* copy3 = nextGroupList->userManagementGroupLoadInfoList;
     al::AudioResourceLoadInfo* Std2stInfo = new al::AudioResourceLoadInfo;
     Std2stInfo->setName("SeResourceStd2nd", false);
     if (copy3)
-        al::trySetAudioInfo2(findout, Std2stInfo, false);
+        al::trySetAudioInfo2(copy3, Std2stInfo, false);
 
-    auto* copy4 = loadInfo->userManagementGroupLoadInfoList;
+    auto* copy4 = nextGroupList->userManagementGroupLoadInfoList;
     al::AudioResourceLoadInfo* bgmStd1stInfo = new al::AudioResourceLoadInfo;
     bgmStd1stInfo->setName("BgmResourceStd1st", true);
     if (copy4)
-        al::trySetAudioInfo2(findout, bgmStd1stInfo, false);
+        al::trySetAudioInfo2(copy4, bgmStd1stInfo, false);
 
-    auto* copy5 = loadInfo->userManagementGroupLoadInfoList;
+    auto* copy5 = nextGroupList->userManagementGroupLoadInfoList;
     al::AudioResourceLoadInfo* bgmStd2stInfo = new al::AudioResourceLoadInfo();
     bgmStd2stInfo->setName("BgmResourceStd2nd", true);
     if (copy5)
-        al::trySetAudioInfo2(findout, bgmStd2stInfo, false);
+        al::trySetAudioInfo2(copy5, bgmStd2stInfo, false);
 
-    auto* copy6 = loadInfo->userManagementGroupLoadInfoList;
+    auto* copy6 = nextGroupList->userManagementGroupLoadInfoList;
     al::AudioResourceLoadInfo* prefetch = new al::AudioResourceLoadInfo();
     prefetch->setName("BgmResourceStdPrefetch", true);
     if (copy6)
-        al::trySetAudioInfo2(findout, prefetch, false);
+        al::trySetAudioInfo2(copy6, prefetch, false);
 
-    al::trySetAudioInfo(mAudioInfoList, nextGroupList, false);
+    al::trySetAudioInfo(groupList, nextGroupList, false);
 
     alAudioSystemFunction::loadAudioResource(
         "システム常駐", mAudioInfoList,
@@ -235,9 +239,9 @@ void GameSystem::init() {
 void GameSystem::setPadName() {
     MessageSystemUser messageSystemUser = MessageSystemUser{mSystemInfo->messageSystem};
     mGamePadSystem->setPadName(
-        0, al::getSystemMessageString(&messageSystemUser, "ControllerApplet", "SeperatePlayer1"));
+        0, al::getSystemMessageString(&messageSystemUser, "ControllerApplet", "SeparatePlayer1"));
     mGamePadSystem->setPadName(
-        1, al::getSystemMessageString(&messageSystemUser, "ControllerApplet", "SeperatePlayer2"));
+        1, al::getSystemMessageString(&messageSystemUser, "ControllerApplet", "SeparatePlayer2"));
 }
 
 bool GameSystem::tryChangeSequence(const char* name) {
@@ -277,20 +281,20 @@ bool GameSystem::tryChangeSequence(const char* name) {
 void GameSystem::movement() {
     mApplicationMessageReceiver->update();
 
-    if (mApplicationMessageReceiver)
+    if (mApplicationMessageReceiver->mIsUpdatedOperationMode)
         mGamePadSystem->setInvalidateDisconnectFrame(600);
     mGamePadSystem->update();
 
     if (mNetworkSystem)
         mNetworkSystem->updateBeforeScene();
 
-    if (mApplicationMessageReceiver->mPerformanceMode == 1) {
-        sead::GraphicsNvn::instance()->setDisplayBufferWindowCrop(0, 0, 1600, 900);
-        // Application::instance()->isDocked(true);
+    if (mApplicationMessageReceiver->mPerformanceMode == nn::oe::PerformanceMode_Boost) {
+        setDisplayBufferWindowCrop(sead::Graphics::instance(), 0, 0, 1600, 900);
+        Application::instance()->getGameFramework()->setDocked(true);
         mSystemInfo->drawSystemInfo->isDocked = true;
     } else {
-        sead::GraphicsNvn::instance()->setDisplayBufferWindowCrop(0, 0, 1280, 720);
-        // Application::instance()->isDocked(false);
+        setDisplayBufferWindowCrop(sead::Graphics::instance(), 0, 0, 1280, 720);
+        Application::instance()->getGameFramework()->setDocked(false);
         mSystemInfo->drawSystemInfo->isDocked = false;
     }
 
@@ -300,23 +304,25 @@ void GameSystem::movement() {
         mNetworkSystem->updateAfterScene();
 
     if (!mSequence->isAlive()) {
-        if (al::isEqualString("HakoniwaSequence", mSequence->getName())) {
+        if (al::isEqualString("HakoniwaSequence", mSequence->getName().cstr())) {
             GameDataHolder* gameDataHolder =
                 static_cast<HakoniwaSequence*>(mSequence)->getGameDataHolder();
-            gameDataHolder->setSeparatePlay(mIsSinglePlay);
+            mIsSinglePlay = gameDataHolder->isSeparatePlay();
             mIsSequenceSetupIncomplete = true;
             *mGameConfigData = *gameDataHolder->getGameConfigData();
         }
+
+        mSystemInfo->layoutSystem->prepareInitFontForChangeLanguage();
+        al::removeResourceCategory("常駐[ローカライズ]");
+
+        al::findNamedHeap("LocalizeResourceHeap")->freeAll();
+        al::addResourceCategory("常駐[ローカライズ]", 80, al::findNamedHeap("LocalizeResourceHeap"));
+        al::clearFileLoaderEntry();
+        al::createCategoryResourceAll("常駐[ローカライズ]");
+        mSystemInfo->layoutSystem->initFontForChangeLanguage();
+        mSystemInfo->messageSystem->initMessageForChangeLanguage();
+        tryChangeSequence("HakoniwaSequence");
     }
-
-    mSystemInfo->layoutSystem->prepareInitFontForChangeLanguage();
-    al::removeResourceCategory("常駐[ローカライズ]");
-
-    al::addResourceCategory("常駐[ローカライズ]", 80, al::findNamedHeap("LocalizeResourceHeap"));
-    al::createCategoryResourceAll("常駐[ローカライズ]");
-    mSystemInfo->layoutSystem->initFontForChangeLanguage();
-    mSystemInfo->messageSystem->initMessageForChangeLanguage();
-    tryChangeSequence("HakoniwaSequence");
 }
 
 void GameSystem::drawMain() {
