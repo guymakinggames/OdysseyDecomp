@@ -1,7 +1,10 @@
 #include "Enemy/Pukupuku.h"
 
+#include "Library/Area/AreaObj.h"
 #include "Library/Area/AreaObjUtil.h"
 #include "Library/Base/StringUtil.h"
+#include "Library/Collision/CollisionParts.h"
+#include "Library/Collision/CollisionPartsKeeperUtil.h"
 #include "Library/Effect/EffectSystemInfo.h"
 #include "Library/Fluid/JointRippleGenerator.h"
 #include "Library/Item/ItemUtil.h"
@@ -39,6 +42,18 @@
 #include "Util/DemoUtil.h"
 #include "Util/Hack.h"
 #include "Util/InputInterruptTutorialUtil.h"
+#include "Util/ItemUtil.h"
+#include "Util/ObjUtil.h"
+#include "Util/SensorMsgFunction.h"
+
+namespace al {
+bool isExistPrePassLight(const LiveActor* actor, const char* name);
+bool isActivePrePassLight(const LiveActor* actor, const char* name);
+void killPrePassLight(LiveActor* actor, const char* name, s32 step);
+void appearPrePassLight(LiveActor* actor, const char* name, s32 step);
+f32 getPrePassSpotLightCurrentLength(const LiveActor* actor, const char* name);
+void setPrePassSpotLightDegree(LiveActor* actor, const char* name, f32 degree);
+}  // namespace al
 
 namespace {
 NERVE_IMPL(Pukupuku, Wait)
@@ -87,6 +102,49 @@ class AreaObjFilterWater : public al::AreaObjFilterBase {
         return !al::isWaterAreaIgnore(areaObj);
     }
 };
+
+bool isHackInputActive(const IUsePlayerHack* hack) {
+    return rs::isHoldHackJump(hack) || rs::isHoldHackAction(hack) ||
+           rs::getHackMoveStickRaw(hack).length() > 0.1f;
+}
+
+const char* getPukupukuDashAction(const al::WaterSurfaceFinder* finder, const IUsePlayerHack* hack) {
+    if (finder->isFoundSurface())
+        return rs::isTriggerHackSwingLeftHand(hack) ? "DashLSurface" : "DashRSurface";
+
+    return rs::isTriggerHackSwingLeftHand(hack) ? "DashLWater" : "DashRWater";
+}
+
+const char* getPukupukuSwimAction(const al::WaterSurfaceFinder* finder) {
+    return finder->isFoundSurface() ? "SwimSurface" : "SwimWater";
+}
+
+const char* getPukupukuWaitAction(const al::WaterSurfaceFinder* finder) {
+    return finder->isFoundSurface() ? "SwimWaitSurface" : "SwimWaitWaterHack";
+}
+
+void updateWaterSurfaceMtx(sead::Matrix34f* mtx, const al::LiveActor* actor,
+                           const al::WaterSurfaceFinder* finder) {
+    if (finder->isFoundSurface()) {
+        sead::Vector3f frontDir;
+        al::calcFrontDir(&frontDir, actor);
+        al::makeMtxUpFrontPos(mtx, finder->getSurfaceNormal(), frontDir,
+                              finder->getSurfacePosition());
+    } else {
+        mtx->setTranslation(al::getTrans(actor));
+    }
+}
+
+void decayRootRotX(sead::Vector3f* rotator) {
+    f32 step = 2.0f;
+    f32 value = -rotator->x;
+    if (rotator->x > 0.0f) {
+        step = -2.0f;
+        value = rotator->x;
+    }
+
+    rotator->x = 2.0f > value ? 0.0f : rotator->x + step;
+}
 }  // namespace
 
 static sead::Vector3f g_7101e62d50 = {0.0f, 50.0f, 50.0f};
@@ -94,6 +152,12 @@ static al::EnemyStateBlowDownParam g_7101e62d10 = {"BlowDown", 8.0f, 13.0f, 0.5f
 static al::EnemyStateBlowDownParam g_7101e62d30 = {"BlowDown", 16.0f, 32.0f, 1.0f,
                                                    0.95f,      120,   true};
 static PlayerHackStartShaderParam g_7101e62d5c = {true, -1.0f, 10, 20};
+
+bool FUN_7100175f24(Pukupuku* pukupuku);
+void FUN_710017605c(f32 rate, Pukupuku* pukupuku);
+bool FUN_7100177c74(sead::Vector3f* out, al::LiveActor* actor);
+__attribute__((noinline)) void FUN_7100178da4(f32 accel, Pukupuku* pukupuku);
+void FUN_710017b094(Pukupuku* actor, const sead::Vector3f& dir);
 
 const struct {
     f32 stability;
@@ -227,7 +291,118 @@ bool Pukupuku::isNerveInWater() const {
            al::isNerve(this, &NrvPukupuku.BlowDownWithoutMsg);
 }
 
-// void Pukupuku::attackSensor(al::HitSensor* self, al::HitSensor* other) {}
+void Pukupuku::attackSensor(al::HitSensor* self, al::HitSensor* other) {
+    if (!FUN_7100175f24(this) || al::isNerve(this, &NrvPukupuku.CaptureStart) ||
+        al::isNerve(this, &NrvPukupuku.CaptureStartEnd)) {
+        if (al::isNerve(this, &NrvPukupuku.Swoon) ||
+            al::isNerve(this, &NrvPukupuku.Trample)) {
+            if (!al::isSensorEnemyBody(self))
+                return;
+
+            al::sendMsgPushAndKillVelocityToTarget(this, self, other);
+            if (al::isNerve(this, &NrvPukupuku.Swoon) && al::isLessStep(this, 20))
+                return;
+
+            rs::sendMsgPushToPlayer(other, self);
+            return;
+        }
+
+        if (al::isNerve(this, &NrvPukupuku.Wait) ||
+            al::isNerve(this, &NrvPukupuku.Reaction) ||
+            al::isNerve(this, &NrvPukupuku.WaitTurnToRailDir)) {
+            if (al::isSensorName(self, "CheckPukupuku") &&
+                rs::sendMsgIsExistPukupuku(other, self)) {
+                sead::Vector3f diff = al::getSensorPos(other) - al::getSensorPos(self);
+                diff.y = 0.0f;
+                if (diff.length() < 50.0f) {
+                    f32 distance = al::calcDistanceV(sead::Vector3f::ey, self, other);
+                    if (distance < _2b8)
+                        _2b8 = distance;
+                    _2bc = true;
+                }
+            }
+
+            if (al::isSensorName(self, "Attack")) {
+                if (al::sendMsgEnemyAttack(other, self)) {
+                    al::setNerve(this, &NrvPukupuku.Trample);
+                } else {
+                    al::sendMsgPushAndKillVelocityToTarget(this, self, other);
+                    rs::sendMsgPushToPlayer(other, self);
+                }
+            }
+        }
+        return;
+    }
+
+    if (al::isSensorEnemyBody(self) && rs::sendMsgHackerNoReaction(mPlayerHack, other, self))
+        return;
+
+    if (al::isSensorName(self, "Attack") && al::isNerve(this, &NrvPukupuku.CaptureAttack) &&
+        al::getVelocity(this).length() > 10.0f &&
+        (rs::sendMsgHackAttackMapObj(other, self) || rs::sendMsgHackAttack(other, self) ||
+         rs::sendMsgBreakPartsBreak(other, self)))
+        return;
+
+    if (al::isSensorName(self, "AttackJumpGround") &&
+        (al::isNerve(this, &NrvPukupuku.CaptureJumpGround) ||
+         al::isNerve(this, &NrvPukupuku.CaptureJumpOut)) &&
+        al::isGreaterStep(this, 20) && al::getVelocity(this).y < -1.0f &&
+        rs::trySendMsgPlayerReflectOrTrample(this, self, other)) {
+        FUN_710017605c(1.0f, this);
+        mHackerStateNormalJump->set_38(15.0f, 30.0f, 2.0f);
+        al::setNerve(this, &NrvPukupuku.CaptureJumpGround);
+        return;
+    }
+
+    if (al::isSensorName(self, "Attack")) {
+        if (rs::sendMsgHackAttackKick(other, self))
+            return;
+
+        al::sendMsgPushAndKillVelocityToTarget(this, self, other);
+    }
+
+    if (al::isNerve(this, &NrvPukupuku.CaptureRollingL) ||
+        al::isNerve(this, &NrvPukupuku.CaptureRollingR) ||
+        al::isNerve(this, &NrvPukupuku.CaptureSwimDash) ||
+        al::isNerve(this, &NrvPukupuku.CaptureReactionWall)) {
+        al::Triangle triangle;
+        sead::Vector3f hitPos;
+        sead::Vector3f arrow = al::getSensorPos(other) - al::getSensorPos(self);
+        if (alCollisionUtil::getFirstPolyOnArrow(this, &hitPos, &triangle, al::getSensorPos(self),
+                                                 arrow, nullptr, nullptr)) {
+            const al::CollisionParts* parts = triangle.getCollisionParts();
+            if (parts->getConnectedHost() != al::getSensorHost(other) &&
+                (hitPos - al::getSensorPos(other)).length() >= al::getSensorRadius(other))
+                return;
+        }
+
+        if (al::isNerve(this, &NrvPukupuku.CaptureRollingL) ||
+            al::isNerve(this, &NrvPukupuku.CaptureRollingR)) {
+            if (al::isSensorName(self, "AttackRolling")) {
+                if (rs::sendMsgHackerNoReaction(mPlayerHack, other, self))
+                    return;
+
+                if (rs::sendMsgHackAttackMapObj(other, self) ||
+                    rs::sendMsgHackAttack(other, self) ||
+                    rs::sendMsgPukupukuRollingAttack(other, self)) {
+                    al::startHitReaction(this, "アタック");
+                    return;
+                }
+            }
+        } else if (al::isNerve(this, &NrvPukupuku.CaptureSwimDash)) {
+            if (al::isSensorName(self, "Dash") && rs::sendMsgPukupukuDash(other, self)) {
+                al::setNerve(this, &NrvPukupuku.CaptureReactionWall);
+                return;
+            }
+        } else if (al::isLessStep(this, 5) && al::isSensorName(self, "Dash") &&
+                   rs::sendMsgPukupukuDash(other, self)) {
+            return;
+        }
+    }
+
+    if (al::isSensorName(self, "Kiss") && _2dc == 60)
+        rs::sendMsgPukupukuKiss(other, self);
+}
 
 bool FUN_7100175f24(Pukupuku* pukupuku) {
     return al::isNerve(pukupuku, &NrvPukupuku.CaptureStart) ||
@@ -262,8 +437,252 @@ void FUN_710017605c(f32 rate, Pukupuku* pukupuku) {
     al::slerpQuat(al::getQuatPtr(pukupuku), al::getQuat(pukupuku), quat, rate);
 }
 
-// bool Pukupuku::receiveMsg(const al::SensorMsg* message, al::HitSensor* other, al::HitSensor*
-// self) {}
+bool Pukupuku::receiveMsg(const al::SensorMsg* message, al::HitSensor* other,
+                          al::HitSensor* self) {
+    if (!al::isSensorEnemyBody(self))
+        return false;
+
+    if (rs::isMsgSphinxQuizRouteKill(message)) {
+        if (al::isNerve(this, &NrvPukupuku.DemoWaitToRevive) ||
+            al::isNerve(this, &NrvPukupuku.BlowDown))
+            return false;
+
+        al::addDemoActor(this);
+        al::tryKillEmitterAndParticleAll(this);
+        al::tryStartAction(this, "DemoWaitToRevive");
+        al::startHitReaction(this, "死亡");
+        al::hideModelIfShow(this);
+        al::setNerve(this, &NrvPukupuku.DemoWaitToRevive);
+        return true;
+    }
+
+    if (rs::tryReceiveMsgInitCapTargetAndSetCapTargetInfo(message, mCapTargetInfo))
+        return true;
+
+    bool disregard = al::isMsgPlayerDisregard(message) ||
+                     rs::isMsgPlayerDisregardHomingAttack(message) ||
+                     rs::isMsgPlayerDisregardTargetMarker(message);
+    if ((!al::isSensorName(self, "Body") || al::isNerve(this, &NrvPukupuku.BlowDownFromCapture) ||
+         al::isNerve(this, &NrvPukupuku.BlowDownWithoutMsg) ||
+         al::isNerve(this, &NrvPukupuku.BlowDown) ||
+         al::isNerve(this, &NrvPukupuku.DemoWaitToRevive)) &&
+        disregard)
+        return true;
+
+    if (rs::isMsgHackMarioDead(message) || rs::isMsgHackMarioCheckpointFlagWarp(message)) {
+        if (rs::isMsgHackMarioCheckpointFlagWarp(message)) {
+            al::hideSilhouetteModelIfShow(this);
+            if (!al::isVisAnimPlaying(this, "CapOnOff") ||
+                al::getVisAnimFrame(this) != 0.0f) {
+                const char* mtpAnimName = mIsPukupukuSnow ? "CapOnOffSnow" : "CapOnOff";
+                al::startVisAnimAndSetFrameAndStop(this, "CapOnOff", 0.0f);
+                al::startMtpAnimAndSetFrameAndStop(this, mtpAnimName, 0.0f);
+            }
+        }
+
+        endCapture();
+        revive(2);
+        return true;
+    }
+
+    if (al::isMsgGoalKill(message)) {
+        if (FUN_7100175f24(this))
+            endCapture();
+
+        revive(2);
+        return true;
+    }
+
+    if (rs::isMsgKillByHomeDemo(message) || rs::isMsgHackMarioDemo(message)) {
+        al::tryKillEmitterAndParticleAll(this);
+        if (rs::isMsgHackMarioDemo(message))
+            endCapture();
+
+        revive(0);
+        return true;
+    }
+
+    if (rs::isMsgHackMarioInWater(message))
+        return true;
+
+    if (al::isNerve(this, &NrvPukupuku.BlowDownFromCapture) ||
+        al::isNerve(this, &NrvPukupuku.BlowDownWithoutMsg) ||
+        al::isNerve(this, &NrvPukupuku.Revive) ||
+        al::isNerve(this, &NrvPukupuku.DemoWaitToRevive))
+        return rs::isMsgCapCancelLockOn(message);
+
+    if (!FUN_7100175f24(this) &&
+        rs::tryReceiveMsgNpcScareByEnemyIgnoreTargetHack(message, mCapTargetInfo))
+        return true;
+
+    bool isEnemyWait = al::isNerve(this, &NrvPukupuku.Wait) ||
+                       al::isNerve(this, &NrvPukupuku.Reaction) ||
+                       al::isNerve(this, &NrvPukupuku.WaitTurnToRailDir) ||
+                       al::isNerve(this, &NrvPukupuku.Trample);
+
+    if (!isEnemyWait) {
+        if (al::isNerve(this, &NrvPukupuku.Swoon)) {
+            if (rs::isMsgCapCancelLockOn(message) ||
+                mEnemyStateSwoon->tryReceiveMsgEnableLockOn(message) ||
+                mEnemyStateSwoon->tryReceiveMsgEndSwoon(message))
+                return true;
+
+            if (mEnemyStateSwoon->tryReceiveMsgStartHack(message)) {
+                mPlayerHack = rs::startHack(self, other, nullptr);
+                startCapture();
+                al::setNerve(this, &NrvPukupuku.CaptureStart);
+                return true;
+            }
+
+            if (rs::isMsgBlowDown(message) || rs::isMsgUtsuboAttack(message)) {
+                rs::requestHitReactionToAttacker(message, self, other);
+                mEnemyStateBlowDown->start(other, self);
+                mEnemyStateBlowDown->setParam(mWaterSurfaceFinder->isFoundSurface() ?
+                                                  &g_7101e62d30 :
+                                                  &g_7101e62d10);
+                rs::setAppearItemFactorAndOffsetByMsg(this, message, other);
+                al::setNerve(this, &NrvPukupuku.BlowDown);
+                return true;
+            }
+
+            if (al::tryReceiveMsgPushAndAddVelocity(this, message, other, self, 3.0f))
+                return true;
+
+            if (al::isMsgPlayerTrampleReflect(message)) {
+                if (al::getVelocity(al::getSensorHost(other)).y >= 0.0f)
+                    return false;
+
+                rs::requestHitReactionToAttacker(message, self, other);
+                return true;
+            }
+
+            if (rs::isMsgPlayerAndCapObjHipDropAll(message)) {
+                rs::requestHitReactionToAttacker(message, self, other);
+                rs::setAppearItemFactorAndOffsetByMsg(this, message, other);
+                al::setNerve(this, &NrvPukupuku.BlowDownFromCapture);
+                return true;
+            }
+
+            return false;
+        }
+
+        if (al::isNerve(this, &NrvPukupuku.CaptureStart) ||
+            al::isNerve(this, &NrvPukupuku.CaptureStartEnd) || !FUN_7100175f24(this))
+            return false;
+
+        if (rs::isMsgEnableMapCheckPointWarp(message)) {
+            if (al::isNerve(this, &NrvPukupuku.CaptureWaitGround) ||
+                al::isNerve(this, &NrvPukupuku.CaptureJumpGround) ||
+                al::isNerve(this, &NrvPukupuku.CaptureLandGround))
+                return rs::isMsgEnableMapCheckPointWarpCollidedGround(message, this);
+
+            return isNerveInWater();
+        }
+
+        if (rs::isMsgWaterRoadIn(message)) {
+            sead::Vector3f dir = al::getSensorPos(self) - al::getSensorPos(other);
+            if (al::tryNormalizeOrZero(&dir))
+                al::addVelocity(this, dir * 15.0f);
+            return true;
+        }
+
+        if (al::isMsgString(message))
+            return al::isEqualString(al::getMsgString(message), "IsHackPukupuku");
+
+        if (rs::isMsgHackerDamageAndCancel(message)) {
+            if (rs::isActiveHackStartDemo(mPlayerHack))
+                rs::endHackStartDemo(mPlayerHack, this);
+
+            if (!rs::requestDamage(mPlayerHack))
+                return false;
+
+            rs::requestHitReactionToAttacker(message, self, other);
+            return true;
+        }
+
+        if (rs::isMsgHackSyncDamageVisibility(message)) {
+            rs::syncDamageVisibility(this, mPlayerHack);
+            return true;
+        }
+
+        if (rs::tryReceiveMsgPushToPlayerAndAddVelocity(this, message, other, self, 3.0f))
+            return true;
+
+        if (rs::isMsgRequestPlayerSpinJump(message)) {
+            f32 power;
+            rs::tryGetRequestPlayerSpinJumpInfo(&power, message);
+            mHackerStateNormalJump->set_38(50.0f, 60.0f, 2.0f);
+            al::setNerve(this, &NrvPukupuku.CaptureJumpGround);
+            return true;
+        }
+
+        if (rs::isMsgCancelHackByDokan(message)) {
+            endCapture();
+            revive(2);
+            return true;
+        }
+
+        if (rs::isMsgCancelHack(message)) {
+            endCapture();
+            if (al::isNerve(this, &NrvPukupuku.CaptureWaitGround) ||
+                al::isNerve(this, &NrvPukupuku.CaptureJumpGround) ||
+                al::isNerve(this, &NrvPukupuku.CaptureLandGround)) {
+                revive(2);
+                return true;
+            }
+
+            al::setVelocityZero(this);
+            al::onCollide(this);
+            al::invalidateClipping(this);
+            _19d = isNerveInWater();
+            al::setNerve(this, &NrvPukupuku.Swoon);
+            return true;
+        }
+
+        return false;
+    }
+
+    if (al::isSensorName(self, "Body") && rs::isMsgIsExistPukupuku(message))
+        return true;
+
+    if (al::isMsgPlayerTrampleReflect(message)) {
+        if (al::isNerve(this, &NrvPukupuku.Trample) && al::isLessStep(this, 10))
+            return false;
+
+        rs::requestHitReactionToAttacker(message, self, other);
+        al::setNerve(this, &NrvPukupuku.Trample);
+        return true;
+    }
+
+    if (rs::isMsgPlayerAndCapObjHipDropAll(message)) {
+        rs::requestHitReactionToAttacker(message, self, other);
+        rs::setAppearItemFactorAndOffsetByMsg(this, message, other);
+        al::setNerve(this, &NrvPukupuku.BlowDownFromCapture);
+        return true;
+    }
+
+    if (rs::isMsgCapEnableLockOn(message) || rs::isMsgCapCancelLockOn(message))
+        return true;
+
+    if (rs::isMsgStartHack(message)) {
+        mPlayerHack = rs::startHack(self, other, nullptr);
+        startCapture();
+        al::setNerve(this, &NrvPukupuku.CaptureStart);
+        return true;
+    }
+
+    if (rs::isMsgBlowDown(message) || rs::isMsgUtsuboAttack(message)) {
+        rs::requestHitReactionToAttacker(message, self, other);
+        mEnemyStateBlowDown->start(other, self);
+        mEnemyStateBlowDown->setParam(mWaterSurfaceFinder->isFoundSurface() ? &g_7101e62d30 :
+                                                                          &g_7101e62d10);
+        rs::setAppearItemFactorAndOffsetByMsg(this, message, other);
+        al::setNerve(this, &NrvPukupuku.BlowDown);
+        return true;
+    }
+
+    return false;
+}
 
 void Pukupuku::endCapture() {
     FUN_710017605c(1.0f, this);
@@ -329,9 +748,208 @@ void Pukupuku::updateEffectWaterSurface() {
     }
 }
 
-// void Pukupuku::updateWaterCondition() {}
+void Pukupuku::updateWaterCondition() {
+    al::AreaObj* areaObj = al::tryFindAreaObj(this, "WaterArea", al::getTrans(this));
+    if (areaObj) {
+        sead::Vector3f nearest;
+        if (al::calcNearestAreaObjEdgePos(&nearest, areaObj, al::getTrans(this))) {
+            f32 nearestX = nearest.x;
+            f32 nearestY = nearest.y;
+            f32 nearestZ = nearest.z;
+            const sead::Vector3f& trans = al::getTrans(this);
+            f32 diffX = nearestX - trans.x;
+            f32 diffY = nearestY - trans.y;
+            f32 diffZ = nearestZ - trans.z;
+            if (diffX * diffX + diffY * diffY + diffZ * diffZ < 10000.0f)
+                _290.set(nearest);
+        }
+    }
 
-// void Pukupuku::control() {}
+    if (al::isInWater(this))
+        _29c.set(al::getTrans(this));
+    else
+        _2a8.set(al::getTrans(this));
+
+    al::WaterSurfaceFinder* finder = mWaterSurfaceFinder;
+    finder->update(al::getTrans(this), -al::getGravity(this), 5000.0f);
+
+    bool isWater = false;
+    bool isPuddle = false;
+    if (al::isInWater(this)) {
+        if (!finder->isFoundSurface() || finder->getDistance() >= -30.0f) {
+            isWater = true;
+            _158++;
+            _154 = 0;
+        } else if (al::isCollidedGround(this) && finder->getDistance() >= -80.0f) {
+            isPuddle = true;
+            _154++;
+            _158 = 0;
+        } else {
+            _154++;
+            _158 = 0;
+        }
+    } else {
+        if (finder->isFoundSurface() && finder->getDistance() >= -30.0f) {
+            isWater = true;
+            _158++;
+            _154 = 0;
+        } else if (finder->isFoundSurface() && al::isCollidedGround(this) &&
+                   finder->getDistance() >= -80.0f) {
+            isPuddle = true;
+            _154++;
+            _158 = 0;
+        } else {
+            _154++;
+            _158 = 0;
+        }
+    }
+
+    if (mWaterSurfaceFinder->isFoundSurface()) {
+        const sead::Vector3f& surfacePosition = mWaterSurfaceFinder->getSurfacePosition();
+        _2e8.x = surfacePosition.x;
+        _2e8.y = surfacePosition.y;
+        _2e8.z = surfacePosition.z;
+    }
+
+    if (al::isCollidedGround(this)) {
+        al::setMaterialCode(this, al::getCollidedFloorMaterialCodeName(this));
+        al::updateMaterialCodeWater(this, isWater);
+        al::updateMaterialCodePuddle(this, isPuddle);
+    }
+}
+
+void Pukupuku::control() {
+    updateEffectWaterSurface();
+
+    if (!FUN_7100175f24(this)) {
+        al::hideSilhouetteModelIfShow(this);
+        bool isPukupukuSnow = mIsPukupukuSnow;
+        if (!al::isVisAnimPlaying(this, "CapOnOff") || al::getVisAnimFrame(this) != 0.0f) {
+            al::startVisAnimAndSetFrameAndStop(this, "CapOnOff", 0.0f);
+            al::startMtpAnimAndSetFrameAndStop(
+                this, isPukupukuSnow ? "CapOnOffSnow" : "CapOnOff", 0.0f);
+        }
+    } else {
+        if (al::isHideModel(this))
+            al::hideSilhouetteModelIfShow(this);
+        else
+            al::showSilhouetteModelIfHide(this);
+
+        if (rs::isHackCapSeparateFlying(mPlayerHack)) {
+            bool isPukupukuSnow = mIsPukupukuSnow;
+            if (!al::isVisAnimPlaying(this, "CapOnOff") || al::getVisAnimFrame(this) != 3.0f) {
+                al::startVisAnimAndSetFrameAndStop(this, "CapOnOff", 3.0f);
+                al::startMtpAnimAndSetFrameAndStop(
+                    this, isPukupukuSnow ? "CapOnOffSnow" : "CapOnOff", 0.0f);
+            }
+        } else {
+            bool isCaptureStart = al::isNerve(this, &NrvPukupuku.CaptureStart);
+            bool isPukupukuSnow = mIsPukupukuSnow;
+            bool isVisAnimPlaying = al::isVisAnimPlaying(this, "CapOnOff");
+            if (isCaptureStart) {
+                if (!isVisAnimPlaying || al::getVisAnimFrame(this) != 1.0f) {
+                    al::startVisAnimAndSetFrameAndStop(this, "CapOnOff", 1.0f);
+                    al::startMtpAnimAndSetFrameAndStop(
+                        this, isPukupukuSnow ? "CapOnOffSnow" : "CapOnOff", 1.0f);
+                }
+            } else if (!isVisAnimPlaying || al::getVisAnimFrame(this) != 2.0f) {
+                al::startVisAnimAndSetFrameAndStop(this, "CapOnOff", 2.0f);
+                al::startMtpAnimAndSetFrameAndStop(
+                    this, isPukupukuSnow ? "CapOnOffSnow" : "CapOnOff", 1.0f);
+            }
+        }
+
+        mJointRippleGenerator->updateAndGenerate();
+
+        if (mGroundTimeLimit >= 421) {
+            if (_2f4) {
+                al::stopDitherAnimAutoCtrl(this);
+                _2f4 = false;
+            }
+
+            f32 rate = (mGroundTimeLimit - 420) / 180.0f;
+            al::setModelAlphaMask(
+                this, sead::Mathf::abs(sead::Mathf::cos(rate * sead::Mathf::pi2() * 3.0f)) *
+                          0.9f +
+                          0.1f);
+        } else if (!_2f4) {
+            al::restartDitherAnimAutoCtrl(this);
+            al::setModelAlphaMask(this, 1.0f);
+            _2f4 = true;
+        }
+
+        if (al::isNerve(this, &NrvPukupuku.CaptureWaitGround) ||
+            al::isNerve(this, &NrvPukupuku.CaptureJumpGround) ||
+            al::isNerve(this, &NrvPukupuku.CaptureLandGround))
+            mHackerDepthShadowMapCtrl->setActive(true);
+        else
+            mHackerDepthShadowMapCtrl->setActive(false);
+        mHackerDepthShadowMapCtrl->update(nullptr);
+    }
+
+    if (!FUN_7100175f24(this) || al::isNerve(this, &NrvPukupuku.CaptureStart) ||
+        al::isNerve(this, &NrvPukupuku.CaptureStartEnd) ||
+        al::isNerve(this, &NrvPukupuku.CaptureRollingL) ||
+        al::isNerve(this, &NrvPukupuku.CaptureRollingR) ||
+        (al::isActionPlaying(this, "TurnPlayer") && !al::isActionEnd(this)) ||
+        al::isNerve(this, &NrvPukupuku.CaptureWaitGround) ||
+        al::isNerve(this, &NrvPukupuku.CaptureJumpGround) ||
+        al::isNerve(this, &NrvPukupuku.CaptureLandGround)) {
+        if (al::isExistPrePassLight(this, "Front") && al::isActivePrePassLight(this, "Front")) {
+            al::killPrePassLight(this, "Front", -1);
+            al::tryGetSubActor(this, "ライト")->kill();
+        }
+    } else {
+        if (al::isExistPrePassLight(this, "Front") && !al::isActivePrePassLight(this, "Front")) {
+            al::appearPrePassLight(this, "Front", -1);
+            al::tryGetSubActor(this, "ライト")->appear();
+        }
+
+        f32 scale =
+            sead::Mathf::clamp(al::getPrePassSpotLightCurrentLength(this, "Front") / 1000.0f,
+                               0.1f, 1.5f);
+        al::setScale(al::tryGetSubActor(this, "ライト"), scale, 1.0f, 1.0f);
+        al::setPrePassSpotLightDegree(this, "Front",
+                                      sead::Mathf::pow(scale * 1000.0f, -1.09f) * 9973.0f);
+    }
+
+    updateInputRolling();
+    updateInputKiss();
+    updateInputUpDown();
+
+    if ((al::isNerve(this, &NrvPukupuku.CaptureSwimStart) ||
+         al::isNerve(this, &NrvPukupuku.CaptureSwim) ||
+         al::isNerve(this, &NrvPukupuku.CaptureSwimDash)) &&
+        mWaterSurfaceFinder->isFoundSurface() && rs::isHoldHackJump(mPlayerHack)) {
+        if (_2e0 < 30)
+            _2e0++;
+    } else {
+        _2e0 = 0;
+    }
+
+    if (!FUN_7100175f24(this)) {
+        bool isDropLengthLow = _2bc;
+        f32 current = al::getShadowMaskDropLength(this, "シャドウマスク");
+        if (isDropLengthLow) {
+            al::setShadowMaskDropLength(this, current * 0.995f + _2b8 * 0.005f,
+                                        "シャドウマスク");
+        } else {
+            al::setShadowMaskDropLength(this, current * 0.995f + _2b4 * 0.005f,
+                                        "シャドウマスク");
+        }
+        _2bc = false;
+    }
+
+    if (FUN_7100175f24(this) && !al::isNerve(this, &NrvPukupuku.CaptureStart)) {
+        al::invalidateShadowMask(this);
+        al::offDepthShadowModel(this);
+        al::validateDepthShadowMap(this);
+    } else {
+        al::validateShadowMask(this);
+        al::onDepthShadowModel(this);
+        al::invalidateDepthShadowMap(this);
+    }
+}
 
 inline bool isTriggerHackSwingAnyHand(const IUsePlayerHack* param_1) {
     return rs::isTriggerHackSwingLeftHand(param_1) || rs::isTriggerHackSwingRightHand(param_1);
@@ -377,13 +995,80 @@ void Pukupuku::updateInputKiss() {
     _2dc = 0;
 }
 
-// void Pukupuku::updateInputUpDown() {}
+void Pukupuku::updateInputUpDown() {
+    if (!FUN_7100175f24(this))
+        return;
+
+    IUsePlayerHack* hack = mPlayerHack;
+    bool holdActionJump = false;
+    if (rs::isHoldHackAction(hack))
+        holdActionJump = rs::isHoldHackJump(hack);
+
+    if (_2d9) {
+        mIsTriggerSwimDash = false;
+        if (!holdActionJump)
+            _2d9 = false;
+    }
+
+    if (holdActionJump) {
+        if (!mIsTriggerSwimDash && !_2d9) {
+            mIsTriggerSwimDash = true;
+            _2d9 = true;
+        }
+    } else {
+        if (rs::isHoldHackJump(mPlayerHack))
+            _2c0 -= 0.1f;
+        else if (rs::isHoldHackAction(mPlayerHack))
+            _2c0 += 0.1f;
+        else
+            _2c0 *= 0.1f;
+    }
+
+    _2c0 = sead::Mathf::clamp(_2c0, -1.0f, 1.0f);
+}
 
 bool Pukupuku::isSwimTypeA() const {
     return true;
 }
 
-// void Pukupuku::updateVelocity() {}
+void Pukupuku::updateVelocity() {
+    if (isNerveInWater()) {
+        f32 rate = sead::Mathf::clamp(al::getVelocity(this).length() / 15.0f, 0.0f, 1.0f);
+        bool isInputOff = !mPlayerHack || rs::getHackMoveStickRaw(mPlayerHack).length() <= 0.1f;
+
+        sead::Vector3f frontDir;
+        al::calcFrontDir(&frontDir, this);
+
+        bool isCollidedGroundFront = false;
+        if (al::isCollidedGround(this))
+            isCollidedGroundFront =
+                (-frontDir).dot(sead::Vector3f::ey) > sead::Mathf::cos(sead::Mathf::deg2rad(15.0f));
+
+        bool isCollidedCeilingFront = false;
+        if (al::isCollidedCeiling(this)) {
+            const f32 frontX = frontDir.x;
+            const f32 frontY = frontDir.y;
+            const f32 frontZ = frontDir.z;
+            const sead::Vector3f& up = sead::Vector3f::ey;
+            isCollidedCeilingFront = frontX * up.x + frontY * up.y + frontZ * up.z >
+                                     sead::Mathf::cos(sead::Mathf::deg2rad(15.0f));
+        }
+
+        al::scaleVelocity(this,
+                          isInputOff && (isCollidedGroundFront || isCollidedCeilingFront) ?
+                              0.1f :
+                              rate * 0.05f + 0.92f);
+        al::limitVelocity(this, 20.0f);
+    } else {
+        al::addVelocityToGravity(this, 2.0f);
+        if (al::isOnGround(this, 0) && !al::isCollidedFloorCode(this, "Slide"))
+            al::scaleVelocity(this, 0.5f);
+        else
+            al::scaleVelocity(this, 0.998f);
+
+        al::limitVelocity(this, 50.0f);
+    }
+}
 
 void Pukupuku::exeReaction() {
     if (al::isFirstStep(this))
@@ -393,7 +1078,47 @@ void Pukupuku::exeReaction() {
         al::setNerve(this, &NrvPukupuku.Wait);
 }
 
-// void Pukupuku::exeWaitRollingRail() {}
+void Pukupuku::exeWaitRollingRail() {
+    if (al::isFirstStep(this)) {
+        al::setVelocityZero(this);
+        _19c = true;
+
+        sead::Vector3f railRollAxis;
+        if (FUN_7100177c74(&railRollAxis, this) && railRollAxis.dot(sead::Vector3f::ey) > 0.0f)
+            _19c = false;
+
+        al::startAction(this, _19c ? "RollingRail" : "RollingRailReverse");
+        al::moveSyncRailTurn(this, 0.0f);
+        al::calcRailMoveDir(&_178, this);
+        _184 = 720.0f;
+    }
+
+    if (al::isExistRail(this) && !al::isParallelDirection(_178, sead::Vector3f::ey, 0.01f)) {
+        sead::Vector3f frontDir;
+        al::calcFrontDir(&frontDir, this);
+
+        f32 angle = al::calcAngleDegree(frontDir, _178);
+        f32 sign = frontDir.z * _178.x - _178.z * frontDir.x;
+        if ((_19c && sign > 0.0f) || (!_19c && sign < 0.0f))
+            angle = 360.0f - angle;
+
+        if (angle > 0.0f && (angle <= _184 || al::isNearZero(_184 - angle, 0.001f))) {
+            s32 actionFrameMax =
+                al::getActionFrameMax(this, _19c ? "RollingRail" : "RollingRailReverse");
+            f32 rate = al::calcNerveRate(this, actionFrameMax);
+            f32 rotate = sead::Mathf::clamp(rate * rate * angle, 0.0f, 45.0f);
+            sead::Quatf* quat = al::getQuatPtr(this);
+            al::rotateQuatYDirDegree(quat, *quat, _19c ? -rotate : rotate);
+            _184 = angle;
+        }
+    }
+
+    if (al::isGreaterEqualStep(this, 20))
+        al::moveSyncRail(this, 2.0f);
+
+    if (al::isActionEnd(this))
+        al::setNerve(this, &NrvPukupuku.Wait);
+}
 
 bool FUN_7100177c74(sead::Vector3f* out, al::LiveActor* actor) {
     f32 railCoord = al::getRailCoord(actor);
@@ -433,7 +1158,64 @@ bool FUN_7100177c74(sead::Vector3f* out, al::LiveActor* actor) {
     return !(out->length() < 0.05f);
 }
 
-// void Pukupuku::exeWait() {}
+void Pukupuku::exeWait() {
+    updateWaterCondition();
+
+    if (al::isFirstStep(this))
+        al::startAction(this, mWaterSurfaceFinder->isFoundSurface() ? "SwimSurfaceEnemy" :
+                                                                    "SwimWaitWater");
+
+    if (mWaterSurfaceFinder->isFoundSurface() && al::getNerveStep(this) % 3 == 0)
+        al::tryAddRippleTiny(this);
+
+    if (al::isExistRail(this)) {
+        if ((al::isActionPlaying(this, "RollingRail") ||
+             al::isActionPlaying(this, "RollingRailReverse")) &&
+            al::isActionEnd(this))
+            al::startAction(this, mWaterSurfaceFinder->isFoundSurface() ? "SwimSurfaceEnemy" :
+                                                                        "SwimWaitWater");
+
+        bool isSamePoint;
+        if (mRailPointNo == al::getRailPointNo(this)) {
+            isSamePoint = true;
+        } else {
+            isSamePoint = false;
+            mRailPointNo = al::getRailPointNo(this);
+        }
+
+        s32 moveType = mMoveType;
+        if (moveType != 0) {
+            al::moveSyncRail(this, 5.0f);
+            if (moveType == 1 && (al::isRailReachedStart(this) || al::isRailReachedEnd(this))) {
+                al::setNerve(this, &NrvPukupuku.WaitTurnToRailDir);
+                return;
+            }
+        } else {
+            if (al::moveSyncRailLoop(this, 5.0f))
+                al::turnToRailDirImmediately(this);
+
+            if (mRailPointNo != 0 &&
+                !(isSamePoint | (mRailPointNo == al::getRailPointNum(this) - 1))) {
+                sead::Vector3f railRollAxis;
+                bool isValidRailRollAxis = FUN_7100177c74(&railRollAxis, this);
+                al::startAction(this,
+                                isValidRailRollAxis &&
+                                        railRollAxis.dot(sead::Vector3f::ey) >= 0.0f ?
+                                    "RollingRailReverse" :
+                                    "RollingRail");
+            }
+        }
+
+        sead::Vector3f railMoveDir;
+        al::calcRailMoveDir(&railMoveDir, this);
+        if (!al::isParallelDirection(railMoveDir, sead::Vector3f::ey, 0.01f))
+            al::turnToRailDir(this, al::calcNerveRate(this, 60) * 5.0f);
+    } else {
+        updateVelocity();
+    }
+
+    checkCollidedFloorDamageAndNextNerve();
+}
 
 bool Pukupuku::checkCollidedFloorDamageAndNextNerve() {
     if (al::isCollidedFloorCode(this, "Needle")) {
@@ -539,20 +1321,141 @@ void Pukupuku::exeCaptureStartEnd() {
     }
 }
 
-// f32 Pukupuku::getAccel(IUsePlayerHack*) const {}
+f32 Pukupuku::getAccel(IUsePlayerHack* hack) const {
+    f32 accel;
+    if (al::isNerve(this, &NrvPukupuku.CaptureSwimDash)) {
+        accel = 1.815f;
+    } else if (rs::isHoldHackJump(hack) && rs::isHoldHackAction(hack)) {
+        accel = 0.8f;
+    } else if (rs::isHoldHackJump(hack) || rs::isHoldHackAction(hack)) {
+        sead::Vector3f frontDir;
+        al::calcFrontDir(&frontDir, this);
+        const f32 frontX = frontDir.x;
+        const f32 frontY = frontDir.y;
+        const f32 frontZ = frontDir.z;
+        const sead::Vector3f& up = sead::Vector3f::ey;
+        f32 dot = frontX * up.x + frontY * up.y + frontZ * up.z;
+        sead::Mathf::cos(0.2617994f);
+        if (dot > 0.9659258f) {
+            accel = sead::Mathf::abs(_2c0) * 0.8f;
+        } else {
+            dot = -frontX * up.x - frontY * up.y - frontZ * up.z;
+            sead::Mathf::cos(0.2617994f);
+            if (dot > 0.9659258f)
+                accel = sead::Mathf::abs(_2c0) * 0.8f;
+            else
+                accel = 0.0f;
+        }
+    } else {
+        accel = rs::getHackMoveStickRaw(mPlayerHack).length() * 0.8f;
+    }
 
-// void Pukupuku::exeCaptureSwimStart() {}
+    if (!al::isNerve(this, &NrvPukupuku.CaptureSwimDash) &&
+        mWaterSurfaceFinder->isFoundSurface() && rs::isHoldHackJump(mPlayerHack) &&
+        !rs::isHoldHackAction(mPlayerHack))
+        accel *= 0.05f;
+
+    return accel;
+}
+
+void Pukupuku::exeCaptureSwimStart() {
+    if (al::isFirstStep(this))
+        al::startAction(this, mWaterSurfaceFinder->isFoundSurface() ? "SwimStartSurface" :
+                                                                    "SwimStartWater");
+
+    if (checkCollidedFloorDamageAndNextNerve())
+        return;
+
+    updateWaterCondition();
+    if (_154 >= 11) {
+        onWaterOut();
+        al::setNerve(this, &NrvPukupuku.CaptureWaitAir);
+        return;
+    }
+
+    updateWaterSurfaceMtx(&mWaterSurface, this, mWaterSurfaceFinder);
+
+    if (tryAddVelocityWaterSurfaceJumpOut()) {
+        al::startHitReaction(this, "水面ジャンプ");
+        al::setNerve(this, &NrvPukupuku.CaptureJumpOut);
+        return;
+    }
+
+    if (isHackInputActive(mPlayerHack))
+        FUN_7100178da4(getAccel(mPlayerHack), this);
+
+    updateVelocity();
+    approachSurface();
+    updatePoseSwim();
+
+    if (mIsTriggerSwimDash) {
+        al::startAction(this, getPukupukuDashAction(mWaterSurfaceFinder, mPlayerHack));
+        al::setNerve(this, &NrvPukupuku.CaptureSwimDash);
+    } else if (_2c4) {
+        const al::Nerve* rollingR = &NrvPukupuku.CaptureRollingR;
+        const al::Nerve* rollingL = &NrvPukupuku.CaptureRollingL;
+        al::setNerve(this, _2c5 ? rollingR : rollingL);
+    } else if (al::isActionEnd(this)) {
+        if (isHackInputActive(mPlayerHack))
+            al::setNerve(this, &NrvPukupuku.CaptureSwim);
+        else
+            al::setNerve(this, &NrvPukupuku.CaptureWait);
+    }
+}
 
 // NON_MATCHING
 void Pukupuku::onWaterOut() {
     if (al::isInWater(this))
         return;
 
-    AreaObjFilterWater filterWater;
     AreaObjFilterWaterIgnore filterWaterIgnore;
-    al::AreaObj* area1 =
-        al::tryFindAreaObjWithFilter(this, "WaterArea", al::getTrans(this), &filterWater);
-    al::AreaObj* area2 = al::tryFindAreaObjWithFilter(this, "WaterArea", _29c, &filterWaterIgnore);
+    AreaObjFilterWater filterWater;
+    al::AreaObj* ignoreArea =
+        al::tryFindAreaObjWithFilter(this, "WaterArea", al::getTrans(this), &filterWaterIgnore);
+    al::AreaObj* waterArea = al::tryFindAreaObjWithFilter(this, "WaterArea", _29c, &filterWater);
+
+    sead::Vector3f start = al::getTrans(this);
+    sead::Vector3f end = _29c;
+    al::AreaObj* areaObj = ignoreArea;
+    bool isReverse;
+
+    if (ignoreArea && !waterArea) {
+        start.set(_29c);
+        end.set(al::getTrans(this));
+        isReverse = true;
+    } else {
+        isReverse = false;
+        if (ignoreArea && waterArea) {
+            if (ignoreArea->isInVolume(start) && ignoreArea->isInVolume(end)) {
+                isReverse = false;
+                areaObj = waterArea;
+            } else {
+                start.set(_29c);
+                end.set(al::getTrans(this));
+                isReverse = true;
+            }
+        } else {
+            areaObj = waterArea;
+        }
+    }
+
+    if (!areaObj)
+        return;
+
+    sead::Vector3f hitPos;
+    sead::Vector3f normal;
+    if (al::checkAreaObjCollisionByArrow(&hitPos, &normal, areaObj, start, end)) {
+        sead::Vector3f frontDir;
+        al::calcFrontDir(&frontDir, this);
+        if (al::isParallelDirection(frontDir, normal))
+            al::calcUpDir(&frontDir, this);
+
+        if (isReverse)
+            normal.negate();
+
+        al::makeMtxFrontUpPos(&mWaterAreaOutEffectFollowMtx, normal, frontDir, hitPos);
+        al::emitEffect(this, "WaterAreaOut", nullptr);
+    }
 }
 
 bool Pukupuku::tryAddVelocityWaterSurfaceJumpOut() {
@@ -570,25 +1473,32 @@ bool Pukupuku::tryAddVelocityWaterSurfaceJumpOut() {
 }
 
 // NON_MATCHING
-void FUN_7100178da4(f32 param_1, Pukupuku* param_2) {
+__attribute__((noinline)) void FUN_7100178da4(f32 param_1, Pukupuku* param_2) {
     sead::Vector3f frontDir;
     al::calcFrontDir(&frontDir, param_2);
 
-    sead::Vector3f velocity;
-    velocity.set(frontDir);
+    f32 x = frontDir.x;
+    f32 y = frontDir.y;
+    f32 z = frontDir.z;
 
     f32 dot = frontDir.dot(sead::Vector3f::ey);
-    sead::Mathf::cos(sead::Mathf::pi() / 12.0f);
-    if (!(dot > /* sead::Mathf::cos(sead::Mathf::pi() / 12.0f) */ 0.9659258f)) {
-        dot = sead::Vector3f::ey.dot(-frontDir);
-        sead::Mathf::cos(sead::Mathf::pi() / 12.0f);
-        if (dot > /* sead::Mathf::cos(sead::Mathf::pi() / 12.0f) */ 0.9659258f)
-            velocity.set(-sead::Vector3f::ey);
+    sead::Mathf::cos(0.2617994f);
+    if (dot > 0.9659258f) {
+        x = sead::Vector3f::ey.x;
+        y = sead::Vector3f::ey.y;
+        z = sead::Vector3f::ey.z;
     } else {
-        velocity.set(sead::Vector3f::ey);
+        dot = (-frontDir).dot(sead::Vector3f::ey);
+        sead::Mathf::cos(0.2617994f);
+        if (dot > 0.9659258f) {
+            y = -sead::Vector3f::ey.y;
+            x = -sead::Vector3f::ey.x;
+            z = -sead::Vector3f::ey.z;
+        }
     }
 
-    al::addVelocity(param_2, velocity * param_1);
+    sead::Vector3f velocity = {x * param_1, y * param_1, z * param_1};
+    al::addVelocity(param_2, velocity);
 }
 
 // NON_MATCHING
@@ -599,9 +1509,11 @@ void Pukupuku::approachSurface() {
     f32 angle = sead::Mathf::clamp((al::calcAngleDegree(upDir, sead::Vector3f::ey) - 15.0f) / 30.0f,
                                    0.0f, 1.0f);
 
-    al::approachWaterSurfaceSpringDumper(this, mWaterSurfaceFinder, 5.0f, 12.0f, 1.0f,
-                                         (1.0f - angle) * 0.008f + angle * 0.002f,
-                                         (1.0f - angle) * 0.9f + angle * 0.988f);
+    f32 invAngle = 1.0f - angle;
+    f32 spring = angle * 0.002f + invAngle * 0.008f;
+    f32 damping = invAngle * 0.9f + angle * 0.988f;
+    al::approachWaterSurfaceSpringDumper(this, mWaterSurfaceFinder, 5.0f, 12.0f, 1.0f, spring,
+                                         damping);
 }
 
 bool Pukupuku::updatePoseSwim() {
@@ -705,81 +1617,246 @@ void Pukupuku::onWaterIn() {
     if (al::getVelocity(this).y < -10.0f && mWaterSurfaceFinder->isFoundSurface()) {
         sead::Vector3f surfaceNormal = mWaterSurfaceFinder->getSurfaceNormal();
         if (al::calcAngleDegree(surfaceNormal, sead::Vector3f::ey) < 30.0f) {
-            if (!this->mWaterSurfaceFinder->isFoundSurface()) {
-                al::startHitReactionHitEffect(this, "水に入る", _2e8);
-            } else {
-                al::startHitReactionHitEffect(this, "水に入る",
-                                              mWaterSurfaceFinder->getSurfacePosition());
-            }
+            al::WaterSurfaceFinder* finder = mWaterSurfaceFinder;
+            bool isFoundSurface = finder->isFoundSurface();
+            const sead::Vector3f* effectPosPtr = &finder->getSurfacePosition();
+            if (!isFoundSurface)
+                effectPosPtr = &_2e8;
+
+            sead::Vector3f effectPos = *effectPosPtr;
+            al::startHitReactionHitEffect(this, "水に入る", effectPos);
         }
     }
+
     al::scaleVelocity(this, 0.3f);
     if (!al::isInWater(this))
         return;
 
     AreaObjFilterWater filterWater;
     AreaObjFilterWaterIgnore filterWaterIgnore;
-    al::AreaObj* areaObj1 =
+    al::AreaObj* waterArea =
         al::tryFindAreaObjWithFilter(this, "WaterArea", al::getTrans(this), &filterWater);
-    al::AreaObj* areaObj2 = al::tryFindAreaObjWithFilter(this, "WaterArea", _2a8, &filterWaterIgnore);
-    /*pVVar7 = al::getTrans(this);
-    local_50.z = pVVar7->z;
-    local_50.x = pVVar7->x;
-    local_50.y = pVVar7->y;
-    local_60.z = (this->field89_0x2a8).z;
-    local_60.x = (this->field89_0x2a8).x;
-    local_60.y = (this->field89_0x2a8).y;
-    if ((pAVar5 == (AreaObj *)0x0) && (pAVar6 != (AreaObj *)0x0)) {
-  LAB_71001796dc:
-      if (pAVar6 == (AreaObj *)0x0) {
-        return;
-      }
-      bVar2 = true;
-      pAVar5 = pAVar6;
-    }
-    else {
-      if ((pAVar5 == (AreaObj *)0x0) || (pAVar6 == (AreaObj *)0x0)) {
-        if (pAVar5 == (AreaObj *)0x0) {
-          return;
+    al::AreaObj* ignoreArea =
+        al::tryFindAreaObjWithFilter(this, "WaterArea", _2a8, &filterWaterIgnore);
+
+    sead::Vector3f start = al::getTrans(this);
+    sead::Vector3f end = _2a8;
+    al::AreaObj* areaObj = waterArea;
+    bool isReverse = false;
+
+    if (!waterArea && ignoreArea) {
+        isReverse = true;
+        areaObj = ignoreArea;
+    } else if (waterArea && ignoreArea) {
+        if (waterArea->isInVolume(start) && waterArea->isInVolume(end)) {
+            isReverse = true;
+            areaObj = ignoreArea;
+        } else {
+            start.set(_2a8);
+            end.set(al::getTrans(this));
         }
-      }
-      else {
-        uVar4 = (**(code **)(pAVar5->vtable + 0x20))(pAVar5,&local_50);
-        if (((uVar4 & 1) != 0) &&
-           (uVar4 = (**(code **)(pAVar5->vtable + 0x20))(pAVar5,&local_60), (uVar4 & 1) != 0))
-        goto LAB_71001796dc;
-      }
-      local_50.z = (this->field89_0x2a8).z;
-      local_50.x = pVVar3->x;
-      local_50.y = pVVar3->y;
-      pVVar3 = al::getTrans(this);
-      local_60.z = pVVar3->z;
-      local_60.x = pVVar3->x;
-      local_60.y = pVVar3->y;
-      bVar2 = false;
+    } else if (waterArea) {
+        start.set(_2a8);
+        end.set(al::getTrans(this));
+    } else {
+        return;
     }
 
-    if (al::checkAreaObjCollisionByArrow(&VStack_78,&local_88,pAVar5,&local_50,&local_60)) {
-      sead::Vecto3f facingDir;
-      al::calcFrontDir(&facingDir,this);
-      if (al::isParallelDirection(&facingDir,&local_88)) {
-        al::calcUpDir(&facingDir,this);
-      }
-      if (bVar2) {
-        local_88.x = -local_88.x;
-        local_88.y = -local_88.y;
-        local_88.z = -local_88.z;
-      }
-      al::makeMtxFrontUpPos(&mWaterAreaIn,&local_88,facingDir,&VStack_78);
-      al::emitEffect(this,"WaterAreaIn",nullptr);
-    }*/
+    if (!areaObj)
+        return;
+
+    sead::Vector3f hitPos;
+    sead::Vector3f normal;
+    if (al::checkAreaObjCollisionByArrow(&hitPos, &normal, areaObj, start, end)) {
+        sead::Vector3f frontDir;
+        al::calcFrontDir(&frontDir, this);
+        if (al::isParallelDirection(frontDir, normal))
+            al::calcUpDir(&frontDir, this);
+
+        if (isReverse)
+            normal.negate();
+
+        al::makeMtxFrontUpPos(&mWaterAreaIn, normal, frontDir, hitPos);
+        al::emitEffect(this, "WaterAreaIn", nullptr);
+    }
 }
 
-// void Pukupuku::exeCaptureSwim() {}
+void Pukupuku::exeCaptureSwim() {
+    if (al::isFirstStep(this))
+        _2f8 = 0;
 
-// void Pukupuku::exeCaptureReactionWall() {}
+    if (checkCollidedFloorDamageAndNextNerve())
+        return;
 
-// bool Pukupuku::checkJumpOutCondition() {}
+    updateWaterCondition();
+
+    bool isWallHit = al::isCollidedWallVelocity(this);
+    bool isCeilingHit = al::isCollidedCeilingVelocity(this);
+    if (isWallHit || isCeilingHit) {
+        const sead::Vector3f& normal =
+            isWallHit ? al::getCollidedWallNormal(this) : al::getCollidedCeilingNormal(this);
+        sead::Vector3f velocity = al::getVelocity(this);
+        if (velocity.length() <= 20.0f) {
+            if (!al::isNerve(this, &NrvPukupuku.CaptureSwimDash) &&
+                al::tryNormalizeOrZero(&velocity)) {
+                sead::Vector3f parallel;
+                al::parallelizeVec(&parallel, normal, al::getVelocity(this));
+                al::addVelocity(this, normal * (parallel.length() * 0.8f));
+            }
+        } else if (al::tryNormalizeOrZero(&velocity)) {
+            if ((-velocity).dot(normal) > sead::Mathf::cos(1.309f)) {
+                const sead::Vector3f& pos =
+                    isWallHit ? al::getCollidedWallPos(this) : al::getCollidedCeilingPos(this);
+                al::startHitReactionHitEffect(this, "壁ヒット", pos);
+                sead::Vector3f parallel;
+                al::parallelizeVec(&parallel, normal, al::getVelocity(this));
+                al::addVelocity(this, normal * (parallel.length() * 1.5f));
+                al::setNerve(this, &NrvPukupuku.CaptureReactionWall);
+                return;
+            }
+
+            sead::Vector3f parallel;
+            al::parallelizeVec(&parallel, normal, al::getVelocity(this));
+            al::addVelocity(this, normal * (parallel.length() * 0.8f));
+        }
+    }
+
+    FUN_7100178da4(getAccel(mPlayerHack), this);
+    updateVelocity();
+
+    bool isVerticalInput = false;
+    sead::Vector3f frontDir;
+    al::calcFrontDir(&frontDir, this);
+    if (frontDir.dot(sead::Vector3f::ey) > sead::Mathf::cos(sead::Mathf::deg2rad(15.0f)) ||
+        (-frontDir).dot(sead::Vector3f::ey) > sead::Mathf::cos(sead::Mathf::deg2rad(15.0f))) {
+        f32 stickLength = rs::getHackMoveStickRaw(mPlayerHack).length();
+        if (stickLength > 0.1f) {
+            sead::Vector3f upDir;
+            al::calcUpDir(&upDir, this);
+            if (frontDir.dot(sead::Vector3f::ey) > sead::Mathf::cos(sead::Mathf::deg2rad(15.0f)))
+                upDir.negate();
+
+            al::addVelocity(this, upDir * (stickLength * 0.6f));
+            joinRotator.x += stickLength * 2.0f * (frontDir.dot(sead::Vector3f::ey) > 0.0f ?
+                                                       1.0f :
+                                                       -1.0f);
+            joinRotator.x = sead::Mathf::clamp(joinRotator.x, -30.0f, 30.0f);
+            isVerticalInput = true;
+        }
+    }
+
+    updateWaterSurfaceMtx(&mWaterSurface, this, mWaterSurfaceFinder);
+
+    if (checkJumpOutCondition()) {
+        tryAddVelocityWaterSurfaceJumpOut();
+        al::startHitReaction(this, "水面ジャンプ");
+        al::setNerve(this, &NrvPukupuku.CaptureJumpOut);
+        return;
+    }
+
+    approachSurface();
+    updatePoseSwim();
+
+    if (_2c4 && (!al::isNerve(this, &NrvPukupuku.CaptureSwimDash) ||
+                 al::isGreaterStep(this, 15))) {
+        if (_2c5)
+            al::setNerve(this, &NrvPukupuku.CaptureRollingR);
+        else
+            al::setNerve(this, &NrvPukupuku.CaptureRollingL);
+        return;
+    }
+
+    if (al::isNerve(this, &NrvPukupuku.CaptureSwim)) {
+        if (isHackInputActive(mPlayerHack)) {
+            _2f8 = 15;
+        } else if (rs::getHackMoveStickRaw(mPlayerHack).length() <= 0.1f && _2f8 > 0) {
+            _2f8--;
+            if (_2f8 == 0) {
+                al::setNerve(this, &NrvPukupuku.CaptureWait);
+                return;
+            }
+        }
+    }
+
+    if (!isVerticalInput)
+        decayRootRotX(&joinRotator);
+
+    if (_154 >= 11) {
+        onWaterOut();
+        al::setNerve(this, &NrvPukupuku.CaptureWaitAir);
+        return;
+    }
+
+    if (al::isNerve(this, &NrvPukupuku.CaptureSwimDash)) {
+        if (al::isGreaterEqualStep(this, 45) && mIsTriggerSwimDash) {
+            al::startAction(this, getPukupukuDashAction(mWaterSurfaceFinder, mPlayerHack));
+            al::setNerve(this, &NrvPukupuku.CaptureSwimDash);
+        } else if (al::isGreaterStep(this, 90)) {
+            al::setNerve(this, &NrvPukupuku.CaptureSwim);
+        }
+    } else {
+        if ((!al::isActionPlaying(this, "TurnPlayer") || al::isActionEnd(this)))
+            al::tryStartActionIfNotPlaying(this, getPukupukuSwimAction(mWaterSurfaceFinder));
+
+        if (mIsTriggerSwimDash) {
+            al::startAction(this, getPukupukuDashAction(mWaterSurfaceFinder, mPlayerHack));
+            al::setNerve(this, &NrvPukupuku.CaptureSwimDash);
+        }
+    }
+}
+
+void Pukupuku::exeCaptureReactionWall() {
+    if (al::isFirstStep(this))
+        al::startAction(this, "ReactionWall");
+
+    if (checkCollidedFloorDamageAndNextNerve())
+        return;
+
+    updateWaterCondition();
+    updateVelocity();
+    approachSurface();
+
+    if (al::isActionEnd(this)) {
+        IUsePlayerHack* hack = mPlayerHack;
+        if (rs::isHoldHackJump(hack) || rs::isHoldHackAction(hack) ||
+            rs::getHackMoveStickRaw(hack).length() > 0.1f)
+            al::setNerve(this, &NrvPukupuku.CaptureSwim);
+        else
+            al::setNerve(this, &NrvPukupuku.CaptureWait);
+    }
+}
+
+bool Pukupuku::checkJumpOutCondition() const {
+    if (!mWaterSurfaceFinder->isFoundSurface())
+        return false;
+    if (!isNerveInWater())
+        return false;
+    if (al::isNerve(this, &NrvPukupuku.CaptureWaitAir))
+        return false;
+    if (al::isNerve(this, &NrvPukupuku.CaptureJumpOut))
+        return false;
+
+    rs::getHackMoveStickRaw(mPlayerHack);
+    f32 upDown = _2c0;
+    if (upDown >= -0.5f)
+        return false;
+    if (_2e0 == 30)
+        return true;
+    if (rs::isTriggerHackSwing(mPlayerHack))
+        return true;
+
+    IUsePlayerHack* hack = mPlayerHack;
+    bool isInputActive =
+        ((rs::isHoldHackJump(hack) || rs::isHoldHackAction(hack) ||
+          rs::getHackMoveStickRaw(hack).length() > 0.1f) &&
+         !al::isNerve(this, &NrvPukupuku.CaptureSwimDash)) ||
+        al::isNerve(this, &NrvPukupuku.CaptureSwimDash);
+
+    if (al::getVelocity(this).y > 10.0f)
+        return upDown < -0.1f && isInputActive;
+
+    return false;
+}
 
 void Pukupuku::updateCameraCaptureWait() {
     sead::Vector3f frontDir;
@@ -794,11 +1871,198 @@ void Pukupuku::updateCameraCaptureWait() {
     _140.set(frontDir);
 }
 
-// void Pukupuku::exeCaptureWait() {}
+void Pukupuku::exeCaptureWait() {
+    if (al::isFirstStep(this)) {
+        if (al::isNerve(this, &NrvPukupuku.CaptureWaitTurnStart))
+            al::startAction(this, mWaterSurfaceFinder->isFoundSurface() ? "SwimWaitStartSurface" :
+                                                                        "SwimWaitStartWater");
+        else
+            al::tryStartActionIfNotPlaying(this, getPukupukuWaitAction(mWaterSurfaceFinder));
+    }
 
-// void Pukupuku::exeCaptureAttack() {}
+    updateWaterCondition();
 
-// void Pukupuku::exeCaptureRolling() {}
+    f32 stickX = sead::Mathf::abs(rs::getHackMoveStickRaw(mPlayerHack).x);
+    if (al::isNerve(this, &NrvPukupuku.CaptureWait) && stickX > 0.2f) {
+        al::setNerve(this, &NrvPukupuku.CaptureWaitTurnStart);
+        return;
+    }
+
+    if (al::isNerve(this, &NrvPukupuku.CaptureWaitTurnStart)) {
+        if (al::isActionPlaying(this, "SwimWaitStartWater") ||
+            al::isActionPlaying(this, "SwimWaitStartSurface")) {
+            if (al::isActionEnd(this)) {
+                const al::Nerve* waitTurn = &NrvPukupuku.CaptureWaitTurn;
+                const al::Nerve* wait = &NrvPukupuku.CaptureWait;
+                al::setNerve(this, stickX > 0.2f ? waitTurn : wait);
+                return;
+            }
+        } else if (stickX <= 0.2f) {
+            al::setNerve(this, &NrvPukupuku.CaptureWait);
+            return;
+        }
+    } else if (al::isNerve(this, &NrvPukupuku.CaptureWaitTurn) && stickX <= 0.2f) {
+        al::setNerve(this, &NrvPukupuku.CaptureWait);
+        return;
+    }
+
+    if (isNerveInWater()) {
+        if (mIsTriggerSwimDash) {
+            al::startAction(this, getPukupukuDashAction(mWaterSurfaceFinder, mPlayerHack));
+            al::setNerve(this, &NrvPukupuku.CaptureSwimDash);
+            return;
+        }
+
+        if (_2c4) {
+            if (_2c5)
+                al::setNerve(this, &NrvPukupuku.CaptureRollingR);
+            else
+                al::setNerve(this, &NrvPukupuku.CaptureRollingL);
+            return;
+        }
+
+        if (isHackInputActive(mPlayerHack)) {
+            al::setNerve(this, &NrvPukupuku.CaptureSwimStart);
+            return;
+        }
+
+        if (checkJumpOutCondition()) {
+            sead::Vector3f frontDir;
+            al::calcFrontDir(&frontDir, this);
+            frontDir.y = 0.0f;
+
+            if (al::tryNormalizeOrZero(&frontDir))
+                al::setVelocity(this, sead::Vector3f::ey * 65.0f + frontDir * 15.0f);
+
+            al::startHitReaction(this, "水面ジャンプ");
+            al::setNerve(this, &NrvPukupuku.CaptureJumpOut);
+            return;
+        }
+
+        if (_154 >= 11) {
+            onWaterOut();
+            al::setNerve(this, &NrvPukupuku.CaptureWaitAir);
+            return;
+        }
+    } else if (al::isOnGround(this, 0) && !al::isCollidedFloorCode(this, "Slide")) {
+        if (al::isNerve(this, &NrvPukupuku.CaptureWaitAir)) {
+            al::setNerve(this, &NrvPukupuku.CaptureWaitGround);
+            return;
+        }
+
+        updateWaterSurfaceMtx(&mWaterSurface, this, mWaterSurfaceFinder);
+        FUN_710017605c(1.0f, this);
+        al::startAction(this, "Land");
+        al::setNerve(this, &NrvPukupuku.CaptureLandGround);
+        return;
+    }
+
+    if ((!al::isNerve(this, &NrvPukupuku.CaptureJumpOut) ||
+         (al::isNerve(this, &NrvPukupuku.CaptureJumpOut) && al::isGreaterStep(this, 30))) &&
+        _158 >= 3) {
+        onWaterIn();
+        al::setNerve(this, &NrvPukupuku.CaptureWait);
+        return;
+    }
+
+    if (checkCollidedFloorDamageAndNextNerve())
+        return;
+
+    updateCameraCaptureWait();
+    updateVelocity();
+    updatePoseSwim();
+    decayRootRotX(&joinRotator);
+
+    if (isNerveInWater()) {
+        approachSurface();
+        al::WaterSurfaceFinder* finder = mWaterSurfaceFinder;
+        if (al::isActionPlaying(this, "SwimWaitWaterHack")) {
+            if (finder->isFoundSurface())
+                al::startAction(this, "SwimWaitSurface");
+        } else if (al::isActionPlaying(this, "SwimWaitSurface") && !finder->isFoundSurface()) {
+            al::startAction(this, "SwimWaitWaterHack");
+        }
+    }
+}
+
+void Pukupuku::exeCaptureAttack() {
+    if (al::isFirstStep(this)) {
+        al::startAction(this, "Attack");
+
+        sead::Vector3f frontDir;
+        al::calcFrontDir(&frontDir, this);
+        al::setVelocity(this, frontDir * 55.0f);
+    }
+
+    if (al::isCollidedWall(this)) {
+        al::HitSensor* collidedWallSensor = al::getCollidedWallSensor(this);
+        if (al::getVelocity(this).length() > 10.0f)
+            rs::sendMsgHackAttack(collidedWallSensor, al::getHitSensor(this, "Attack"));
+    }
+
+    if (checkCollidedFloorDamageAndNextNerve())
+        return;
+
+    updateWaterCondition();
+    if (!isNerveInWater() && al::isOnGround(this, 0)) {
+        al::setNerve(this, &NrvPukupuku.CaptureWaitGround);
+        return;
+    }
+
+    if (al::isGreaterStep(this, 20) && isNerveInWater())
+        FUN_7100178da4(getAccel(mPlayerHack), this);
+
+    updateVelocity();
+    if (al::isActionEnd(this)) {
+        IUsePlayerHack* hack = mPlayerHack;
+        if (rs::isHoldHackJump(hack) || rs::isHoldHackAction(hack) ||
+            rs::getHackMoveStickRaw(hack).length() > 0.1f)
+            al::setNerve(this, &NrvPukupuku.CaptureSwim);
+        else
+            al::setNerve(this, &NrvPukupuku.CaptureWait);
+    }
+}
+
+void Pukupuku::exeCaptureRolling() {
+    if (al::isFirstStep(this)) {
+        updateWaterSurfaceMtx(&mWaterSurface, this, mWaterSurfaceFinder);
+
+        al::WaterSurfaceFinder* finder = mWaterSurfaceFinder;
+        bool isRollingR = al::isNerve(this, &NrvPukupuku.CaptureRollingR);
+        const char* actionR = finder->isFoundSurface() ? "RollingRSurface" : "RollingRWater";
+        const char* actionL = finder->isFoundSurface() ? "RollingLSurface" : "RollingLWater";
+        al::startAction(this, isRollingR ? actionR : actionL);
+    }
+
+    if (checkCollidedFloorDamageAndNextNerve())
+        return;
+
+    updateWaterCondition();
+    updateVelocity();
+    if (_154 >= 11) {
+        onWaterOut();
+        al::setNerve(this, &NrvPukupuku.CaptureWaitAir);
+        return;
+    }
+
+    if (al::isGreaterStep(this, 15) && isHackInputActive(mPlayerHack))
+        FUN_7100178da4(getAccel(mPlayerHack), this);
+
+    if (al::isGreaterStep(this, 12) && _2c4) {
+        const al::Nerve* nerve = &NrvPukupuku.CaptureRollingL;
+        if (al::isNerve(this, &NrvPukupuku.CaptureRollingR))
+            nerve = &NrvPukupuku.CaptureRollingR;
+        al::setNerve(this, nerve);
+        return;
+    }
+
+    if (al::isActionEnd(this)) {
+        if (isHackInputActive(mPlayerHack))
+            al::setNerve(this, &NrvPukupuku.CaptureSwim);
+        else
+            al::setNerve(this, &NrvPukupuku.CaptureWait);
+    }
+}
 
 bool Pukupuku::updateGroundTimeLimit() {
     if (mGroundTimeLimit < 600)
@@ -908,12 +2172,14 @@ void Pukupuku::exeCaptureJumpGround() {
 
     al::WaterSurfaceFinder* finder2 = mWaterSurfaceFinder;
     if (finder2->isFoundSurface()) {
+        sead::Matrix34f* waterSurface = &mWaterSurface;
         sead::Vector3f frontDir;
         al::calcFrontDir(&frontDir, this);
-        al::makeMtxUpFrontPos(&mWaterSurface, finder2->getSurfaceNormal(), frontDir,
+        al::makeMtxUpFrontPos(waterSurface, finder2->getSurfaceNormal(), frontDir,
                               finder2->getSurfacePosition());
     } else {
-        mWaterSurface.setTranslation(al::getTrans(this));
+        const sead::Vector3f& trans = al::getTrans(this);
+        mWaterSurface.setTranslation(trans);
     }
 
     al::startAction(this, "Land");
@@ -924,9 +2190,38 @@ void Pukupuku::exeCaptureLandGround() {
     if (updateGroundTimeLimit()) {
         endCapture();
         revive(2);
-
         return;
     }
+
+    FUN_710017605c(0.04f, this);
+    decayRootRotX(&joinRotator);
+    updateVelocity();
+    updateWaterCondition();
+
+    if (al::isOnGround(this, 0)) {
+        sead::Vector3f moveVec;
+        rs::calcHackerMoveVec(&moveVec, mPlayerHack, sead::Vector3f::ey);
+        IUsePlayerHack* playerHack = mPlayerHack;
+        if (rs::isTriggerHackPreInputAnyButton(playerHack) || rs::isTriggerHackSwing(playerHack)) {
+            al::startHitReaction(this, "地上ジャンプ開始");
+            mHackerStateNormalJump->set_38(15.0f, 30.0f, 2.0f);
+            al::setNerve(this, &NrvPukupuku.CaptureJumpGround);
+            return;
+        }
+
+        al::addVelocity(this, moveVec * 3.0f);
+        FUN_710017b094(this, moveVec);
+    }
+
+    if (_158 > 2) {
+        mGroundTimeLimit = 0;
+        onWaterIn();
+        al::setNerve(this, &NrvPukupuku.CaptureWait);
+        return;
+    }
+
+    if (al::isActionEnd(this))
+        al::setNerve(this, &NrvPukupuku.CaptureWaitGround);
 }
 
 void Pukupuku::exeBlowDown() {

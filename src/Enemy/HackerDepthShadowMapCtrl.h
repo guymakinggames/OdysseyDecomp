@@ -14,6 +14,7 @@ public:
                              f32 shadowLengthOffset, f32 lerpLength, f32 lerpGradationLength);
     void resetAndUpdate();
     void update(PlayerCollider* playerCollider);
+    void setActive(bool isActive) { mIsActive = isActive; }
 
 private:
     al::LiveActor* mActor = nullptr;

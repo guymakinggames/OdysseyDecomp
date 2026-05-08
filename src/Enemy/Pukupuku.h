@@ -50,7 +50,7 @@ public:
     void approachSurface();
     bool updatePoseSwim();
     void onWaterIn();
-    bool checkJumpOutCondition();
+    bool checkJumpOutCondition() const;
     void updateCameraCaptureWait();
     bool updateGroundTimeLimit();
 
