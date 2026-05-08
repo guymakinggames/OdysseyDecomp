@@ -21,6 +21,18 @@
 #include "Item/CoinStack.h"
 #include "System/GameDataUtil.h"
 
+namespace {
+constexpr f32 cFallDistance = 74.5f;
+
+union RandomWork {
+    sead::Random random;
+
+    RandomWork() {}
+
+    ~RandomWork() {}
+};
+}  // namespace
+
 CoinStackGroup::CoinStackGroup(const char* name) : al::LiveActor(name) {}
 
 void CoinStackGroup::init(const al::ActorInitInfo& initInfo) {
@@ -84,36 +96,42 @@ void CoinStackGroup::makeActorAlive() {
         mCoinStack->makeStackAppear();
 }
 
-inline f32 getRandom(f32 scale) {
-    f32 value = sead::Random().getF32();
-    return scale * value * ((value > 0.5f) ? 1.0f : -1.0f);
-}
-
 void CoinStackGroup::generateCoinStackGroup(const al::ActorInitInfo& initInfo, s32 stackAmount) {
     f32 clippingRadius = updateClippingInfo(stackAmount);
-    const sead::Vector3f& trans2 = al::getTrans(this);
+    const sead::Vector3f& trans = al::getTrans(this);
 
     if (stackAmount == 0)
         return;
 
-    sead::Vector3f trans = trans2;
+    f32 transX = trans.x;
+    f32 transY = trans.y;
+    f32 transZ = trans.z;
     CoinStack* previousStack = nullptr;
     for (u32 index = 0; index != (u32)stackAmount; index++) {
         CoinStack* newStack = new CoinStack("CoinStack");
         newStack->init(initInfo);
+        RandomWork random;
+        sead::Vector3f stackTrans;
 
-        if (index == 0) {
-            newStack->postInit(this, trans, previousStack, mClippingPos, clippingRadius,
-                               &fallDistance);
-            mCoinStack = newStack;
+        if (index != 0) {
+            random.random.init();
+            f32 value = random.random.getF32();
+            f32 randomX = (value * 10.0f) * ((value > 0.5f) ? 1.0f : -1.0f) + 0.0f;
+            f32 stackY = index * 74.5f;
+            random.random.init();
+            value = random.random.getF32();
+            f32 randomZ = (value * 10.0f) * ((value > 0.5f) ? 1.0f : -1.0f) + 0.0f;
+            stackTrans.set(transX + randomX, transY + stackY, transZ + randomZ);
+            newStack->postInit(this, stackTrans, previousStack, mClippingPos, clippingRadius,
+                               &cFallDistance);
             previousStack = newStack;
             continue;
         }
 
-        sead::Vector3f strans(trans.x + getRandom(10.0f) + 0.0f, trans.y + index * 74.5f,
-                              trans.z + getRandom(10.0f) + 0.0f);
-        newStack->postInit(this, strans, previousStack, mClippingPos, clippingRadius,
-                           &fallDistance);
+        stackTrans.set(transX, transY, transZ);
+        newStack->postInit(this, stackTrans, previousStack, mClippingPos, clippingRadius,
+                           &cFallDistance);
+        mCoinStack = newStack;
         previousStack = newStack;
     }
 }

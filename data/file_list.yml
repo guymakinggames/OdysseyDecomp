@@ -48862,7 +48862,7 @@ Item/CoinStackGroup.o:
   - offset: 0x1c6aa4
     size: 572
     label: _ZN14CoinStackGroup22generateCoinStackGroupERKN2al13ActorInitInfoEi
-    status: NonMatchingMajor
+    status: Matching
   - offset: 0x1c6ce0
     size: 16
     label: _ZN14CoinStackGroup15makeStackAppearEv
