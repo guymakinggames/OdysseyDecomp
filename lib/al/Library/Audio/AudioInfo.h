@@ -56,6 +56,16 @@ public:
 
     bool setInfo(const T* audioInfo) const { return mList->pushBack(audioInfo); }
 
+    sead::PtrArray<const T>* getList() const { return mList; }
+
+    s32 getInfoNum() const { return mList->size(); }
+
+    const T* getInfo(s32 index) const { return mList->unsafeAt(index); }
+
+    void eraseInfo(s32 index) const { mList->erase(index, 1); }
+
+    void clear() const { mList->clear(); }
+
     void sort() const {
         if (mList->size() >= 10)
             mList->heapSort(T::compareInfo);
@@ -63,7 +73,7 @@ public:
             mList->sort(T::compareInfo);
     }
 
-private:
+protected:
     sead::PtrArray<const T>* mList;
     bool mIsLinearSearch;
 };
@@ -90,7 +100,7 @@ public:
         AudioInfoList<T>::sort();
 
         for (s32 i = 0; i < getPartsSize(); i++)
-            mParts->at(i)->sort();
+            mParts->unsafeAt(i)->sort();
     }
 
     s32 getPartsSize() const {
@@ -98,6 +108,89 @@ public:
             return 0;
         return mParts->size();
     }
+
+    s32 getInfoNum() const {
+        const sead::PtrArray<const T>* list = AudioInfoList<T>::mList;
+        sead::PtrArray<AudioInfoList<T>>* parts = mParts;
+        s32 infoNum = list->size();
+
+        if (parts) {
+            s32 partsInfoNum = 0;
+            for (s32 i = 0; i < getPartsSize(); i++)
+                partsInfoNum += parts->unsafeAt(i)->getInfoNum();
+            infoNum += partsInfoNum;
+        }
+
+        return infoNum;
+    }
+
+    const T* getInfo(s32 index) const {
+        s32 listSize = AudioInfoList<T>::getInfoNum();
+        if (index < listSize) {
+            if (index < 0)
+                return nullptr;
+            return AudioInfoList<T>::getInfo(index);
+        }
+
+        if (!mParts)
+            return nullptr;
+
+        index -= listSize;
+        for (s32 i = 0; i < mParts->size(); i++) {
+            AudioInfoList<T>* part = mParts->unsafeAt(i);
+            s32 partSize = part->getInfoNum();
+            if (index < partSize) {
+                if (index < 0)
+                    return nullptr;
+                return part->getInfo(index);
+            }
+            index -= partSize;
+        }
+
+        return nullptr;
+    }
+
+    const T* getInfoUnsafe(s32 index) const {
+        sead::PtrArray<const T>* list = AudioInfoList<T>::mList;
+        s32 listSize = list->size();
+        if (index < listSize)
+            return list->unsafeAt(index);
+
+        sead::PtrArray<AudioInfoList<T>>* parts = mParts;
+        index -= listSize;
+        for (s32 i = 0;; i++) {
+            AudioInfoList<T>* part = parts->unsafeAt(i);
+            sead::PtrArray<const T>* partList = part->getList();
+            s32 partSize = partList->size();
+            if (index < partSize)
+                return partList->unsafeAt(index);
+            index -= partSize;
+        }
+    }
+
+    void eraseInfo(s32 index) const {
+        s32 listSize = AudioInfoList<T>::getInfoNum();
+        if (index < listSize) {
+            AudioInfoList<T>::eraseInfo(index);
+            return;
+        }
+
+        if (!mParts)
+            return;
+
+        index -= listSize;
+        for (s32 i = 0; i < mParts->size(); i++) {
+            AudioInfoList<T>* part = mParts->unsafeAt(i);
+            s32 partSize = part->getInfoNum();
+            if (index < partSize) {
+                part->eraseInfo(index);
+                return;
+            }
+            index -= partSize;
+        }
+    }
+
+    void clear() const { AudioInfoList<T>::clear(); }
 
 private:
     sead::PtrArray<AudioInfoList<T>>* mParts;

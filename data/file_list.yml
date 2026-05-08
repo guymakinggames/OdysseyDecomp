@@ -205302,47 +205302,47 @@ Util/YoshiUtil.o:
     label:
     - _ZN4sead19FileDeviceStreamSrcC1Ev
     - _ZN4sead19FileDeviceStreamSrcC2Ev
-    status: NotDecompiled
+    status: Matching
   - offset: 0x755d84
     size: 112
     label:
     - _ZN4sead19FileDeviceStreamSrcC1EPNS_10FileHandleE
     - _ZN4sead19FileDeviceStreamSrcC2EPNS_10FileHandleE
-    status: NotDecompiled
+    status: Matching
   - offset: 0x755df4
     size: 104
     label:
     - _ZN4sead19FileDeviceStreamSrcD1Ev
     - _ZN4sead19FileDeviceStreamSrcD2Ev
-    status: NotDecompiled
+    status: Matching
   - offset: 0x755e5c
     size: 100
     label: _ZN4sead19FileDeviceStreamSrcD0Ev
-    status: NotDecompiled
+    status: Matching
   - offset: 0x755ec0
     size: 8
     label: _ZN4sead19FileDeviceStreamSrc4readEPvj
-    status: NotDecompiled
+    status: Matching
   - offset: 0x755ec8
     size: 8
     label: _ZN4sead19FileDeviceStreamSrc5writeEPKvj
-    status: NotDecompiled
+    status: Matching
   - offset: 0x755ed0
     size: 48
     label: _ZN4sead19FileDeviceStreamSrc4skipEi
-    status: NotDecompiled
+    status: Matching
   - offset: 0x755f00
     size: 20
     label: _ZN4sead19FileDeviceStreamSrc6rewindEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x755f14
     size: 48
     label: _ZN4sead19FileDeviceStreamSrc5isEOFEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x755f44
     size: 64
     label: _ZN4sead19FileDeviceStreamSrc13setFileHandleEPNS_10FileHandleE
-    status: NotDecompiled
+    status: Matching
   - offset: 0x755f84
     size: 132
     label:
@@ -213156,7 +213156,7 @@ Util/YoshiUtil.o:
   - offset: 0x799950
     size: 5188
     label: _ZN3agl3utl13ParameterBase16createByTypeNameERKN4sead14SafeStringBaseIcEES6_
-    status: NotDecompiled
+    status: Matching
   - offset: 0x79ad94
     size: 4
     label: _ZN3agl3utl13ParameterBaseD0Ev
@@ -213890,7 +213890,7 @@ Util/YoshiUtil.o:
   - offset: 0x79d1ac
     size: 500
     label: _ZNK3agl3utl14ParameterCurveILj2EE5cloneEPN4sead4HeapEPNS0_13IParameterObjE
-    status: NonMatchingMajor
+    status: Matching
     lazy: true
   - offset: 0x79d3a0
     size: 140
@@ -214025,7 +214025,7 @@ Util/YoshiUtil.o:
   - offset: 0x79f28c
     size: 448
     label: _ZNK3agl3utl14ParameterCurveILj4EE5cloneEPN4sead4HeapEPNS0_13IParameterObjE
-    status: NonMatchingMajor
+    status: Matching
     lazy: true
   - offset: 0x79f44c
     size: 220
@@ -214035,382 +214035,382 @@ Util/YoshiUtil.o:
   - offset: 0x79f528
     size: 84
     label: _ZN3agl3utl15ParameterBufferIiED2Ev
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79f57c
     size: 68
     label: _ZN3agl3utl15ParameterBufferIiED0Ev
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79f5c0
     size: 8
     label: _ZNK3agl3utl15ParameterBufferIiE16getParameterTypeEv
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79f5c8
     size: 8
     label: _ZNK3agl3utl15ParameterBufferIiE3ptrEv
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79f5d0
     size: 8
     label: _ZN3agl3utl15ParameterBufferIiE3ptrEv
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79f5d8
     size: 8
     label: _ZNK3agl3utl9ParameterIPiE7typePtrEv
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79f5e0
     size: 8
     label: _ZN3agl3utl9ParameterIPiE7typePtrEv
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79f5e8
     size: 12
     label: _ZNK3agl3utl15ParameterBufferIiE4sizeEv
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79f5f4
     size: 12
     label: _ZNK3agl3utl9ParameterIPiE16calcBinarizeSizeEv
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79f600
     size: 208
     label: _ZNK3agl3utl9ParameterIPiE5cloneEPN4sead4HeapEPNS0_13IParameterObjE
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79f6d0
     size: 72
     label: _ZN3agl3utl15ParameterBufferIiE18postApplyResource_EPKvm
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79f718
     size: 8
     label: _ZNK3agl3utl15ParameterBufferIiE8isBinaryEv
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79f720
     size: 8
     label: _ZNK3agl3utl15ParameterBufferIiE22isBinaryInternalBufferEv
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79f728
     size: 20
     label: _ZN3agl3utl9ParameterIPiED2Ev
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79f73c
     size: 4
     label: _ZN3agl3utl9ParameterIPiED0Ev
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79f740
     size: 8
     label: _ZNK3agl3utl9ParameterIPiE16getParameterTypeEv
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79f748
     size: 8
     label: _ZNK3agl3utl9ParameterIPiE3ptrEv
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79f750
     size: 8
     label: _ZN3agl3utl9ParameterIPiE3ptrEv
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79f758
     size: 8
     label: _ZNK3agl3utl9ParameterIPiE4sizeEv
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79f760
     size: 84
     label: _ZN3agl3utl15ParameterBufferIfED2Ev
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79f7b4
     size: 68
     label: _ZN3agl3utl15ParameterBufferIfED0Ev
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79f7f8
     size: 8
     label: _ZNK3agl3utl15ParameterBufferIfE16getParameterTypeEv
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79f800
     size: 8
     label: _ZNK3agl3utl15ParameterBufferIfE3ptrEv
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79f808
     size: 8
     label: _ZN3agl3utl15ParameterBufferIfE3ptrEv
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79f810
     size: 8
     label: _ZNK3agl3utl9ParameterIPfE7typePtrEv
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79f818
     size: 8
     label: _ZN3agl3utl9ParameterIPfE7typePtrEv
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79f820
     size: 12
     label: _ZNK3agl3utl15ParameterBufferIfE4sizeEv
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79f82c
     size: 12
     label: _ZNK3agl3utl9ParameterIPfE16calcBinarizeSizeEv
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79f838
     size: 208
     label: _ZNK3agl3utl9ParameterIPfE5cloneEPN4sead4HeapEPNS0_13IParameterObjE
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79f908
     size: 72
     label: _ZN3agl3utl15ParameterBufferIfE18postApplyResource_EPKvm
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79f950
     size: 8
     label: _ZNK3agl3utl15ParameterBufferIfE8isBinaryEv
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79f958
     size: 8
     label: _ZNK3agl3utl15ParameterBufferIfE22isBinaryInternalBufferEv
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79f960
     size: 20
     label: _ZN3agl3utl9ParameterIPfED2Ev
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79f974
     size: 4
     label: _ZN3agl3utl9ParameterIPfED0Ev
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79f978
     size: 8
     label: _ZNK3agl3utl9ParameterIPfE16getParameterTypeEv
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79f980
     size: 8
     label: _ZNK3agl3utl9ParameterIPfE3ptrEv
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79f988
     size: 8
     label: _ZN3agl3utl9ParameterIPfE3ptrEv
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79f990
     size: 8
     label: _ZNK3agl3utl9ParameterIPfE4sizeEv
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79f998
     size: 84
     label: _ZN3agl3utl15ParameterBufferIjED2Ev
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79f9ec
     size: 68
     label: _ZN3agl3utl15ParameterBufferIjED0Ev
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79fa30
     size: 8
     label: _ZNK3agl3utl15ParameterBufferIjE16getParameterTypeEv
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79fa38
     size: 8
     label: _ZNK3agl3utl15ParameterBufferIjE3ptrEv
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79fa40
     size: 8
     label: _ZN3agl3utl15ParameterBufferIjE3ptrEv
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79fa48
     size: 8
     label: _ZNK3agl3utl9ParameterIPjE7typePtrEv
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79fa50
     size: 8
     label: _ZN3agl3utl9ParameterIPjE7typePtrEv
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79fa58
     size: 12
     label: _ZNK3agl3utl15ParameterBufferIjE4sizeEv
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79fa64
     size: 12
     label: _ZNK3agl3utl9ParameterIPjE16calcBinarizeSizeEv
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79fa70
     size: 208
     label: _ZNK3agl3utl9ParameterIPjE5cloneEPN4sead4HeapEPNS0_13IParameterObjE
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79fb40
     size: 72
     label: _ZN3agl3utl15ParameterBufferIjE18postApplyResource_EPKvm
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79fb88
     size: 8
     label: _ZNK3agl3utl15ParameterBufferIjE8isBinaryEv
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79fb90
     size: 8
     label: _ZNK3agl3utl15ParameterBufferIjE22isBinaryInternalBufferEv
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79fb98
     size: 20
     label: _ZN3agl3utl9ParameterIPjED2Ev
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79fbac
     size: 4
     label: _ZN3agl3utl9ParameterIPjED0Ev
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79fbb0
     size: 8
     label: _ZNK3agl3utl9ParameterIPjE16getParameterTypeEv
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79fbb8
     size: 8
     label: _ZNK3agl3utl9ParameterIPjE3ptrEv
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79fbc0
     size: 8
     label: _ZN3agl3utl9ParameterIPjE3ptrEv
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79fbc8
     size: 8
     label: _ZNK3agl3utl9ParameterIPjE4sizeEv
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79fbd0
     size: 84
     label: _ZN3agl3utl15ParameterBufferIhED2Ev
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79fc24
     size: 68
     label: _ZN3agl3utl15ParameterBufferIhED0Ev
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79fc68
     size: 8
     label: _ZNK3agl3utl15ParameterBufferIhE16getParameterTypeEv
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79fc70
     size: 8
     label: _ZNK3agl3utl15ParameterBufferIhE3ptrEv
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79fc78
     size: 8
     label: _ZN3agl3utl15ParameterBufferIhE3ptrEv
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79fc80
     size: 8
     label: _ZNK3agl3utl9ParameterIPhE7typePtrEv
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79fc88
     size: 8
     label: _ZN3agl3utl9ParameterIPhE7typePtrEv
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79fc90
     size: 8
     label: _ZNK3agl3utl15ParameterBufferIhE4sizeEv
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79fc98
     size: 12
     label: _ZNK3agl3utl9ParameterIPhE16calcBinarizeSizeEv
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79fca4
     size: 208
     label: _ZNK3agl3utl9ParameterIPhE5cloneEPN4sead4HeapEPNS0_13IParameterObjE
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79fd74
     size: 68
     label: _ZN3agl3utl15ParameterBufferIhE18postApplyResource_EPKvm
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79fdb8
     size: 8
     label: _ZNK3agl3utl15ParameterBufferIhE8isBinaryEv
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79fdc0
     size: 8
     label: _ZNK3agl3utl15ParameterBufferIhE22isBinaryInternalBufferEv
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79fdc8
     size: 20
     label: _ZN3agl3utl9ParameterIPhED2Ev
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79fddc
     size: 4
     label: _ZN3agl3utl9ParameterIPhED0Ev
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79fde0
     size: 8
     label: _ZNK3agl3utl9ParameterIPhE16getParameterTypeEv
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79fde8
     size: 8
     label: _ZNK3agl3utl9ParameterIPhE3ptrEv
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79fdf0
     size: 8
     label: _ZN3agl3utl9ParameterIPhE3ptrEv
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79fdf8
     size: 8
     label: _ZNK3agl3utl9ParameterIPhE4sizeEv
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x79fe00
     size: 28
@@ -280776,19 +280776,19 @@ Library/Se/SeDemoEventController.o:
     label:
     - _ZN2al21SeDemoEventControllerC1EPNS_13AudioDirectorE
     - _ZN2al21SeDemoEventControllerC2EPNS_13AudioDirectorE
-    status: NotDecompiled
+    status: Matching
   - offset: 0x9ee760
     size: 20
     label: _ZN2al21SeDemoEventController10startEventEPNS_22AudioInfoListWithPartsINS_14SeDemoProcInfoEEE
-    status: NonMatchingMajor
+    status: Matching
   - offset: 0x9ee774
     size: 1944
     label: _ZN2al21SeDemoEventController8endEventEPNS_22AudioInfoListWithPartsINS_14SeDemoProcInfoEEEb
-    status: NotDecompiled
+    status: Matching
   - offset: 0x9eef0c
     size: 744
     label: _ZN2al21SeDemoEventController13procDemoEventEPKNS_14SeDemoProcInfoE
-    status: NotDecompiled
+    status: Matching
   - offset: 0x9ef1f4
     size: 276
     label: ''
@@ -280796,7 +280796,7 @@ Library/Se/SeDemoEventController.o:
   - offset: 0x9ef308
     size: 2820
     label: _ZN2al21SeDemoEventController6updateEi
-    status: NotDecompiled
+    status: Matching
   - offset: 0x9efe0c
     size: 32
     label: ''

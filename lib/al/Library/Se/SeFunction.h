@@ -63,6 +63,11 @@ void setSeOutputTvDrcRemoteAll(SePlayParamList*);
 
 namespace alSeFunction {
 void stopAllSe(const al::AudioDirector*, u32);
+void stopAllOneShotSe(const al::AudioDirector*, u32, const char*);
+void startSituation(al::AudioDirector*, const char*, s32);
+void endSituation(al::AudioDirector*, const char*, s32);
+void startListenerPoser(al::AudioDirector*, const char*, s32);
+void endListenerPoser(al::AudioDirector*, const char*, s32);
 void startListenerPoser(const al::IUseAudioKeeper*, const char*, s32);
 void endListenerPoser(const al::IUseAudioKeeper*, const char*, s32);
 }  // namespace alSeFunction
