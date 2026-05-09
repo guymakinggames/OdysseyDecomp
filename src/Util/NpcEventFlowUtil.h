@@ -15,6 +15,8 @@ al::EventFlowExecutor* initEventFlow(al::LiveActor*, const al::ActorInitInfo&, c
                                      const char*);
 al::EventFlowExecutor* initEventFlowSuffix(al::LiveActor*, const al::ActorInitInfo&, const char*,
                                            const char*, const char*);
+al::EventFlowExecutor* initEventFlowForSystem(al::LiveActor*, const al::ActorInitInfo&,
+                                              const char*, const char*, const char*);
 bool isDefinedEventCamera(const al::EventFlowExecutor*, const char*);
 bool checkTriggerDecideWithRequestIcon(al::LiveActor*, const sead::Vector3f&, f32);
 void startEventFlow(al::EventFlowExecutor*, const char*);
@@ -24,6 +26,8 @@ void initEventCameraObject(al::EventFlowExecutor* flowExecutor, const al::ActorI
                            const char* name);
 void initEventCameraObjectAfterKeepPose(al::EventFlowExecutor* flowExecutor,
                                         const al::ActorInitInfo& initInfo, const char* name);
+void endEventCutSceneDemoOrTryEndEventCutSceneDemoBySkip(al::LiveActor* actor);
+void endEventCutSceneDemo(al::LiveActor* actor);
 void setEventBalloonFilterOnlyMiniGame(const al::LiveActor*);
 void resetEventBalloonFilter(const al::LiveActor*);
 void requestSwitchTalkNpcEventAfterDoorSnow(al::LiveActor* actor, s32 doorIndex);

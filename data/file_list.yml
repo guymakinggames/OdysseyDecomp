@@ -83887,767 +83887,767 @@ MapObj/ShineTowerRocket.o:
   - offset: 0x308808
     size: 820
     label: _ZN16ShineTowerRocketC2EPKc
-    status: NotDecompiled
+    status: Matching
   - offset: 0x308b3c
     size: 804
     label: _ZN16ShineTowerRocketC1EPKc
-    status: NotDecompiled
+    status: Matching
   - offset: 0x308e60
     size: 6648
     label: _ZN16ShineTowerRocket4initERKN2al13ActorInitInfoE
-    status: NotDecompiled
+    status: NonMatchingMajor
   - offset: 0x30a858
     size: 128
-    label: ''
-    status: NotDecompiled
+    label: _ZN12_GLOBAL__N_117isDamageHomeModelEPKN2al9LiveActorE
+    status: Matching
   - offset: 0x30a8d8
     size: 44
     label: _ZN16ShineTowerRocket14onSwitchDitherEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x30a904
     size: 52
     label: _ZN16ShineTowerRocket15offSwitchDitherEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x30a938
     size: 200
-    label: ''
-    status: NotDecompiled
+    label: _ZN12_GLOBAL__N_130setupCapTargetInfoForHomeGlobeEPN4sead7Vector3IfEEP13CapTargetInfoPN2al9LiveActorES8_
+    status: Matching
   - offset: 0x30aa00
     size: 128
     label: _ZN16ShineTowerRocket13makeActorDeadEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x30aa80
     size: 220
     label: _ZN16ShineTowerRocket14makeActorAliveEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x30ab5c
     size: 2116
     label: _ZN2rs14setupHomeMeterEPN2al9LiveActorE
-    status: NotDecompiled
+    status: NonMatchingMajor
   - offset: 0x30b3a0
     size: 440
     label: _ZN16ShineTowerRocket18initAfterPlacementEv
-    status: NotDecompiled
+    status: NonMatchingMajor
   - offset: 0x30b558
     size: 148
-    label: ''
-    status: NotDecompiled
+    label: _ZN12_GLOBAL__N_123invalidateDitherAnimAllEPN2al9LiveActorE
+    status: Matching
   - offset: 0x30b5ec
     size: 100
-    label: ''
-    status: NotDecompiled
+    label: _ZN12_GLOBAL__N_127invalidateOcclusionQueryAllEPN2al9LiveActorE
+    status: Matching
   - offset: 0x30b650
     size: 4
     label: _ZN16ShineTowerRocket12startClippedEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x30b654
     size: 720
     label: _ZN16ShineTowerRocket7controlEv
-    status: NotDecompiled
+    status: NonMatchingMajor
   - offset: 0x30b924
     size: 16
     label: _ZNK16ShineTowerRocket18isActiveDirtyModelEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x30b934
     size: 136
-    label: ''
-    status: NotDecompiled
+    label: _ZN12_GLOBAL__N_116calcRestShineNumEPKN2al9LiveActorE
+    status: Matching
   - offset: 0x30b9bc
     size: 120
     label: _ZN16ShineTowerRocket8calcAnimEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x30ba34
     size: 2480
     label: _ZN16ShineTowerRocket10receiveMsgEPKN2al9SensorMsgEPNS0_9HitSensorES5_
-    status: NotDecompiled
+    status: NonMatchingMajor
   - offset: 0x30c3e4
     size: 208
     label: _ZN23ShineTowerGlobeAnimCtrl5startEf
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x30c4b4
     size: 172
-    label: ''
-    status: NotDecompiled
+    label: _ZN12_GLOBAL__N_124isNeedShowHomeSkyMessageEPK16ShineTowerRocket
+    status: Matching
   - offset: 0x30c560
     size: 260
     label: _ZN16ShineTowerRocket12attackSensorEPN2al9HitSensorES2_
-    status: NotDecompiled
+    status: Matching
   - offset: 0x30c664
     size: 144
     label: _ZN16ShineTowerRocket12receiveEventEPKN2al18EventFlowEventDataE
-    status: NotDecompiled
+    status: Matching
   - offset: 0x30c6f4
     size: 188
     label: _ZN16ShineTowerRocket22tryStartEntranceCameraEi
-    status: NotDecompiled
+    status: Matching
   - offset: 0x30c7b0
     size: 144
     label: _ZThn264_N16ShineTowerRocket12receiveEventEPKN2al18EventFlowEventDataE
-    status: NotDecompiled
+    status: Matching
   - offset: 0x30c840
     size: 60
     label: _ZNK16ShineTowerRocket11isFirstDemoEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x30c87c
     size: 60
     label: _ZThn272_NK16ShineTowerRocket11isFirstDemoEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x30c8b8
     size: 72
     label: _ZNK16ShineTowerRocket16isEnableSkipDemoEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x30c900
     size: 76
     label: _ZThn272_NK16ShineTowerRocket16isEnableSkipDemoEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x30c94c
     size: 60
     label: _ZN16ShineTowerRocket8skipDemoEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x30c988
     size: 60
     label: _ZThn272_N16ShineTowerRocket8skipDemoEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x30c9c4
     size: 1720
     label: _ZN16ShineTowerRocket7exeWaitEv
-    status: NotDecompiled
+    status: NonMatchingMajor
   - offset: 0x30d07c
     size: 124
-    label: ''
-    status: NotDecompiled
+    label: _ZN12_GLOBAL__N_121validateDitherAnimAllEPN2al9LiveActorE
+    status: Matching
   - offset: 0x30d0f8
     size: 100
-    label: ''
-    status: NotDecompiled
+    label: _ZN12_GLOBAL__N_125validateOcclusionQueryAllEPN2al9LiveActorE
+    status: Matching
   - offset: 0x30d15c
     size: 140
     label: _ZN16ShineTowerRocket11updatePartsEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x30d1e8
     size: 456
     label: _ZNK16ShineTowerRocket20isNearPlayerEntranceEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x30d3b0
     size: 128
     label: _ZN16ShineTowerRocket11exeReactionEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x30d430
     size: 360
     label: _ZN16ShineTowerRocket14exeDemoPrepareEv
-    status: NotDecompiled
+    status: NonMatchingMajor
   - offset: 0x30d598
     size: 272
     label: _ZN16ShineTowerRocket12tryStartDemoEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x30d6a8
     size: 68
     label: _ZN16ShineTowerRocket20tryEndEntranceCameraEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x30d6ec
     size: 132
-    label: ''
-    status: NotDecompiled
+    label: _ZN12_GLOBAL__N_125isPayShineEnoughForUnlockEPKN2al9LiveActorE
+    status: Matching
   - offset: 0x30d770
     size: 264
     label: _ZN16ShineTowerRocket24exeDemoWalkPlayerToPointEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x30d878
     size: 312
     label: _ZN16ShineTowerRocket24calcPlayerPoseForPayDemoEv
-    status: NotDecompiled
+    status: NonMatchingMajor
   - offset: 0x30d9b0
     size: 28
     label: _ZN16ShineTowerRocket28tryStartHitReactionDemoStartEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x30d9cc
     size: 156
-    label: ''
-    status: NotDecompiled
+    label: _ZN12_GLOBAL__N_127isNeedDemoWalkPlayerToPointEPKN2al9LiveActorE
+    status: Matching
   - offset: 0x30da68
     size: 352
-    label: ''
-    status: NotDecompiled
+    label: _ZN12_GLOBAL__N_129isEnableUnlockWorldByPayShineEPKN2al9LiveActorEii
+    status: Matching
   - offset: 0x30dbc8
     size: 872
     label: _ZN16ShineTowerRocket18exeDemoAppearShineEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x30df30
     size: 232
     label: _ZN9DemoShine9startDemoEi
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x30e018
     size: 224
     label: _ZN16ShineTowerRocket27exeDemoWaitAfterAppearShineEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x30e0f8
     size: 592
     label: _ZN16ShineTowerRocket10tryLevelUpEv
-    status: NotDecompiled
+    status: NonMatchingMajor
   - offset: 0x30e348
     size: 368
     label: _ZN16ShineTowerRocket30exeDemoWaitBeforeScaleUpDirectEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x30e4b8
     size: 604
     label: _ZN16ShineTowerRocket24calcCameraMtxMeterUpPrevEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x30e714
     size: 912
     label: _ZN16ShineTowerRocket14exeDemoScaleUpEv
-    status: NotDecompiled
+    status: NonMatchingMajor
   - offset: 0x30eaa4
     size: 324
     label: _ZN16ShineTowerRocket18exeDemoMeterRotateEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x30ebe8
     size: 492
     label: _ZN16ShineTowerRocket13calcCameraMtxEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x30edd4
     size: 660
     label: _ZN16ShineTowerRocket16setupRotateMeterEv
-    status: NotDecompiled
+    status: NonMatchingMajor
   - offset: 0x30f068
     size: 376
     label: _ZN16ShineTowerRocket18exeDemoMeterUpPrevEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x30f1e0
     size: 272
-    label: ''
-    status: NotDecompiled
+    label: _ZN12_GLOBAL__N_122calcHomeMeterAnimFrameEPKN2al9LiveActorEi
+    status: Matching
   - offset: 0x30f2f0
     size: 496
     label: _ZN16ShineTowerRocket14exeDemoMeterUpEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x30f4e0
     size: 64
     label: _ZN16ShineTowerRocket18exeDemoMeterUpPostEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x30f520
     size: 92
     label: _ZN16ShineTowerRocket20exeDemoTutorialShineEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x30f57c
     size: 244
     label: _ZN16ShineTowerRocket25exeDemoSelectGoOtherWorldEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x30f670
     size: 380
     label: _ZN16ShineTowerRocket16exeDemoAwardMoonEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x30f7ec
     size: 256
     label: _ZN16ShineTowerRocket20exeDemoUpLevelCameraEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x30f8ec
     size: 592
     label: _ZN16ShineTowerRocket20calcCameraMtxLevelUpEv
-    status: NotDecompiled
+    status: NonMatchingMajor
   - offset: 0x30fb3c
     size: 216
     label: _ZN16ShineTowerRocket14exeDemoUpLevelEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x30fc14
     size: 92
     label: _ZN16ShineTowerRocket20exeDemoInformPowerUpEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x30fc70
     size: 240
     label: _ZN16ShineTowerRocket27exeDemoInformPowerUpMessageEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x30fd60
     size: 88
     label: _ZN16ShineTowerRocket16exeDemoKoopaShipEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x30fdb8
     size: 192
     label: _ZN16ShineTowerRocket20exeDemoKoopaShipFadeEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x30fe78
     size: 596
     label: _ZN16ShineTowerRocket23exeDemoUpLevelCloseFadeEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x3100cc
     size: 700
     label: _ZN16ShineTowerRocket22exeDemoUpLevelWaitFadeEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x310388
     size: 132
     label: _ZN16ShineTowerRocket22exeDemoUpLevelOpenFadeEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x31040c
     size: 164
     label: _ZN16ShineTowerRocket20exeDemoInformNewHomeEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x3104b0
     size: 144
     label: _ZN16ShineTowerRocket27exeDemoInformNewHomeMessageEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x310540
     size: 232
     label: _ZN16ShineTowerRocket27exeDemoInformPeachCastleCapEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x310628
     size: 104
     label: _ZN16ShineTowerRocket23exeDemoInformRepairHomeEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x310690
     size: 264
     label: _ZN16ShineTowerRocket20exeDemoInformNewItemEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x310798
     size: 84
     label: _ZN16ShineTowerRocket32exeDemoInformCompleteShineFadeInEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x3107ec
     size: 172
     label: _ZN16ShineTowerRocket34exeDemoInformCompleteShineFadeWaitEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x310898
     size: 88
     label: _ZN16ShineTowerRocket33exeDemoInformCompleteShineFadeOutEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x3108f0
     size: 168
     label: _ZN16ShineTowerRocket26exeDemoInformCompleteShineEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x310998
     size: 60
     label: _ZN16ShineTowerRocket16exeDemoWarpWorldEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x3109d4
     size: 4
     label: _ZN16ShineTowerRocket11exeWaitDemoEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x3109d8
     size: 584
     label: _ZN16ShineTowerRocket27exeDemoAppearPlayerFromHomeEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x310c20
     size: 16
     label: _ZNK16ShineTowerRocket19isActiveDamageModelEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x310c30
     size: 144
     label: _ZN16ShineTowerRocket32exeDemoAppearPlayerFromHomeAfterEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x310cc0
     size: 332
     label: _ZN16ShineTowerRocket19exeDemoReturnToHomeEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x310e0c
     size: 72
     label: _ZNK16ShineTowerRocket25isActiveDirtyOrClashModelEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x310e54
     size: 1904
     label: _ZN16ShineTowerRocket19exeDemoWorldTakeoffEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x3115c4
     size: 756
     label: _ZN16ShineTowerRocket23exeDemoWorldTakeoffNextEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x3118b8
     size: 304
     label: _ZN16ShineTowerRocket21setupWorldTakeoffPoseEb
-    status: NotDecompiled
+    status: Matching
   - offset: 0x3119e8
     size: 332
     label: _ZN16ShineTowerRocket25exeDemoAppearFromEntranceEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x311b34
     size: 16
     label: _ZN16ShineTowerRocket27exeDemoWorldTakeoffForDebugEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x311b44
     size: 300
     label: _ZN16ShineTowerRocket10exeNoStartEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x311c70
     size: 136
     label: _ZN16ShineTowerRocket15exeNoStartEarthEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x311cf8
     size: 104
     label: _ZN16ShineTowerRocket15exeNoStartEnterEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x311d60
     size: 8
     label: _ZN16ShineTowerRocket11exeBackDoorEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x311d68
     size: 176
     label: _ZN16ShineTowerRocket17exeNoStartAndCoinEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x311e18
     size: 240
     label: _ZN16ShineTowerRocket25exeGoToWorldMapWithCameraEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x311f08
     size: 464
     label: _ZN16ShineTowerRocket24setupWorldMapCameraParamEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x3120d8
     size: 164
     label: _ZN16ShineTowerRocket23exeGoToWorldMapWithFadeEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x31217c
     size: 88
     label: _ZN16ShineTowerRocket11exeWorldMapEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x3121d4
     size: 96
     label: _ZN16ShineTowerRocket14cancelWorldMapEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x312234
     size: 96
     label: _ZN16ShineTowerRocket14decideWorldMapEi
-    status: NotDecompiled
+    status: Matching
   - offset: 0x312294
     size: 12
     label: _ZNK16ShineTowerRocket10isWorldMapEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x3122a0
     size: 72
     label: _ZN16ShineTowerRocket29startDemoAppearPlayerFromHomeEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x3122e8
     size: 172
     label: _ZN16ShineTowerRocket21startDemoReturnToHomeEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x312394
     size: 76
     label: _ZN16ShineTowerRocket19updatePartsByDamageEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x3123e0
     size: 108
-    label: ''
-    status: NotDecompiled
+    label: _ZN12_GLOBAL__N_124resetSubActorPositionAllEPN2al9LiveActorE
+    status: Matching
   - offset: 0x31244c
     size: 144
-    label: ''
-    status: NotDecompiled
+    label: _ZN12_GLOBAL__N_128setModelAlphaMaskSubActorAllEPN2al9LiveActorEf
+    status: Matching
   - offset: 0x3124dc
     size: 512
     label: _ZN2rs25setupHomeMeterDitherParamEPN2al9LiveActorEP22ShineTowerCommonKeeper
-    status: NotDecompiled
+    status: NonMatchingMajor
   - offset: 0x3126dc
     size: 16
     label: _ZNK16ShineTowerRocket18isActiveClashModelEv
-    status: NotDecompiled
+    status: Matching
   - offset: 0x3126ec
     size: 168
-    label: ''
-    status: NotDecompiled
+    label: _ZN12_GLOBAL__N_119isHomeMeterCompleteEPKN2al9LiveActorE
+    status: Matching
   - offset: 0x312794
     size: 416
     label: _ZN2rs16setupHomeStickerEPN2al9LiveActorE
-    status: NotDecompiled
+    status: NonMatchingMajor
   - offset: 0x312934
     size: 428
     label: _ZN2rs18setupHomeCompLightEPN2al9LiveActorE
-    status: NotDecompiled
+    status: Matching
   - offset: 0x312ae0
     size: 44
     label: _ZN2rs18getHomeArchiveNameEPKN2al9LiveActorE
-    status: NotDecompiled
+    status: Matching
   - offset: 0x312b0c
     size: 88
     label: _ZN11DamageModel7controlEv
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x312b64
     size: 8
     label: _ZNK12_GLOBAL__N_123ShineTowerRocketNrvWait7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x312b6c
     size: 184
     label: _ZN9DemoShine7controlEv
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x312c24
     size: 148
     label: _ZN23ShineTowerGlobeAnimCtrl4initERKN2al13ActorInitInfoE
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x312cb8
     size: 16
     label: _ZN23ShineTowerGlobeAnimCtrl12startClippedEv
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x312cc8
     size: 144
     label: _ZN23ShineTowerGlobeAnimCtrl7controlEv
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x312d58
     size: 280
     label: _ZN23ShineTowerGlobeAnimCtrl14updateMusicBoxEv
-    status: NotDecompiled
+    status: Wip
     lazy: true
   - offset: 0x312e70
     size: 8
     label: _ZNK12_GLOBAL__N_141ShineTowerRocketNrvDemoAppearFromEntrance7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x312e78
     size: 4
     label: _ZNK12_GLOBAL__N_127ShineTowerRocketNrvWaitDemo7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x312e7c
     size: 8
     label: _ZNK12_GLOBAL__N_135ShineTowerRocketNrvWaitIgnoreLockOn7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x312e84
     size: 8
     label: _ZNK12_GLOBAL__N_140ShineTowerRocketNrvWaitAfterReturnToHome7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x312e8c
     size: 8
     label: _ZNK12_GLOBAL__N_127ShineTowerRocketNrvReaction7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x312e94
     size: 8
     label: _ZNK12_GLOBAL__N_131ShineTowerRocketNrvNoStartEarth7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x312e9c
     size: 8
     label: _ZNK12_GLOBAL__N_133ShineTowerRocketNrvNoStartAndCoin7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x312ea4
     size: 8
     label: _ZNK12_GLOBAL__N_130ShineTowerRocketNrvDemoPrepare7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x312eac
     size: 8
     label: _ZNK12_GLOBAL__N_137ShineTowerRocketNrvDemoPrepareNoShine7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x312eb4
     size: 8
     label: _ZNK12_GLOBAL__N_141ShineTowerRocketNrvGoToWorldMapWithCamera7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x312ebc
     size: 8
     label: _ZNK12_GLOBAL__N_135ShineTowerRocketNrvDemoWorldTakeoff7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x312ec4
     size: 8
     label: _ZNK12_GLOBAL__N_139ShineTowerRocketNrvDemoWorldTakeoffNext7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x312ecc
     size: 108
     label: _ZNK12_GLOBAL__N_131ShineTowerRocketNrvNoStartEnter7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x312f38
     size: 8
     label: _ZNK12_GLOBAL__N_147ShineTowerRocketNrvDemoWalkPlayerToPointNoShine7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x312f40
     size: 8
     label: _ZNK12_GLOBAL__N_134ShineTowerRocketNrvDemoAppearShine7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x312f48
     size: 8
     label: _ZNK12_GLOBAL__N_134ShineTowerRocketNrvDemoMeterRotate7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x312f50
     size: 8
     label: _ZNK12_GLOBAL__N_126ShineTowerRocketNrvNoStart7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x312f58
     size: 8
     label: _ZNK12_GLOBAL__N_139ShineTowerRocketNrvGoToWorldMapWithFade7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x312f60
     size: 8
     label: _ZNK12_GLOBAL__N_141ShineTowerRocketNrvDemoSelectGoOtherWorld7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x312f68
     size: 8
     label: _ZNK12_GLOBAL__N_143ShineTowerRocketNrvDemoWaitAfterAppearShine7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x312f70
     size: 8
     label: _ZNK12_GLOBAL__N_146ShineTowerRocketNrvDemoWaitBeforeScaleUpDirect7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x312f78
     size: 8
     label: _ZNK12_GLOBAL__N_134ShineTowerRocketNrvDemoMeterUpPrev7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x312f80
     size: 8
     label: _ZNK12_GLOBAL__N_130ShineTowerRocketNrvDemoScaleUp7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x312f88
     size: 8
     label: _ZNK12_GLOBAL__N_136ShineTowerRocketNrvDemoInformNewItem7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x312f90
     size: 88
     label: _ZNK12_GLOBAL__N_148ShineTowerRocketNrvDemoInformCompleteShineFadeIn7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x312fe8
     size: 8
     label: _ZNK12_GLOBAL__N_143ShineTowerRocketNrvDemoInformPeachCastleCap7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x312ff0
     size: 8
     label: _ZNK12_GLOBAL__N_130ShineTowerRocketNrvDemoMeterUp7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x312ff8
     size: 68
     label: _ZNK12_GLOBAL__N_134ShineTowerRocketNrvDemoMeterUpPost7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x31303c
     size: 8
     label: _ZNK12_GLOBAL__N_132ShineTowerRocketNrvDemoAwardMoon7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x313044
     size: 8
     label: _ZNK12_GLOBAL__N_130ShineTowerRocketNrvDemoUpLevel7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x31304c
     size: 96
     label: _ZNK12_GLOBAL__N_136ShineTowerRocketNrvDemoInformPowerUp7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x3130ac
     size: 8
     label: _ZNK12_GLOBAL__N_143ShineTowerRocketNrvDemoInformPowerUpMessage7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x3130b4
     size: 92
     label: _ZNK12_GLOBAL__N_132ShineTowerRocketNrvDemoKoopaShip7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x313110
     size: 8
     label: _ZNK12_GLOBAL__N_136ShineTowerRocketNrvDemoKoopaShipFade7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x313118
     size: 92
     label: _ZNK12_GLOBAL__N_127ShineTowerRocketNrvWorldMap7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x313174
     size: 8
     label: _ZNK12_GLOBAL__N_138ShineTowerRocketNrvDemoUpLevelWaitFade7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x31317c
     size: 8
     label: _ZNK12_GLOBAL__N_138ShineTowerRocketNrvDemoUpLevelOpenFade7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x313184
     size: 8
     label: _ZNK12_GLOBAL__N_136ShineTowerRocketNrvDemoInformNewHome7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x31318c
     size: 108
     label: _ZNK12_GLOBAL__N_139ShineTowerRocketNrvDemoInformRepairHome7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x3131f8
     size: 8
     label: _ZNK12_GLOBAL__N_143ShineTowerRocketNrvDemoInformNewHomeMessage7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x313200
     size: 8
     label: _ZNK12_GLOBAL__N_150ShineTowerRocketNrvDemoInformCompleteShineFadeWait7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x313208
     size: 92
     label: _ZNK12_GLOBAL__N_149ShineTowerRocketNrvDemoInformCompleteShineFadeOut7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x313264
     size: 8
     label: _ZNK12_GLOBAL__N_142ShineTowerRocketNrvDemoInformCompleteShine7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x31326c
     size: 8
     label: _ZNK12_GLOBAL__N_136ShineTowerRocketNrvDemoUpLevelCamera7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x313274
     size: 144
     label: _ZNK12_GLOBAL__N_148ShineTowerRocketNrvDemoAppearPlayerFromHomeAfter7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x313304
     size: 64
     label: _ZNK12_GLOBAL__N_132ShineTowerRocketNrvDemoWarpWorld7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x313344
     size: 8
     label: _ZNK12_GLOBAL__N_143ShineTowerRocketNrvDemoAppearPlayerFromHome7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x31334c
     size: 8
     label: _ZNK12_GLOBAL__N_135ShineTowerRocketNrvDemoReturnToHome7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x313354
     size: 8
     label: _ZNK12_GLOBAL__N_139ShineTowerRocketNrvDemoUpLevelCloseFade7executeEPN2al11NerveKeeperE
-    status: NotDecompiled
+    status: Matching
     guess: true
   - offset: 0x31335c
     size: 28
     label: _ZNK2al10FunctorV0MIP16ShineTowerRocketMS1_FvvEEclEv
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x313378
     size: 76
     label: _ZNK2al10FunctorV0MIP16ShineTowerRocketMS1_FvvEE5cloneEv
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x3133c4
     size: 4
     label: _ZN2al10FunctorV0MIP16ShineTowerRocketMS1_FvvEED0Ev
-    status: NotDecompiled
+    status: Matching
     lazy: true
 MapObj/ShineTowerScaleHolder.o:
   '.text':

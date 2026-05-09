@@ -7,6 +7,7 @@ public:
     Bird(const char* name);
     void initGlideOff(const sead::Matrix34f*, const sead::Vector3f&, bool);
     static Bird* createBirdGlideDownUfo(const char*, const al::ActorInitInfo&);
+    void startFlyAwayHomeLanding();
     void tryStartGlideDown();
     void tryStartFlyAway();
 

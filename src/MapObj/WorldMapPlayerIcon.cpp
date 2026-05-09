@@ -4,7 +4,7 @@
 #include "Library/LiveActor/ActorInitFunction.h"
 #include "Library/LiveActor/LiveActorFunction.h"
 
-#include "MapObj/ShineTowerRocket.h"
+#include "MapObj/ShineTowerRocketFunction.h"
 
 static void movementRecursive(al::LiveActor* actor) {
     actor->movement();

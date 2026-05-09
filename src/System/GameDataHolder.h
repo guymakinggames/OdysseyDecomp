@@ -124,6 +124,9 @@ public:
     void setRequireSaveFalse();
     void setRequireSaveFrame();
     void updateRequireSaveFrame();
+
+    void setStageChanging(bool isStageChanging) { mIsStageChanging = isStageChanging; }
+
     bool isInvalidSaveForMoonGet() const;
     void invalidateSaveForMoonGet();
     void validateSaveForMoonGet();

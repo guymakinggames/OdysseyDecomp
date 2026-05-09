@@ -19,6 +19,7 @@ namespace al {
 class LayoutTextureRenderObj;
 class LiveActor;
 class ClippingDirector;
+class ModelKeeper;
 
 void updateMaterialCodeGround(LiveActor* actor, const char*);
 void updateMaterialCodeAll(LiveActor* actor);
@@ -71,6 +72,7 @@ s32 getJointIndex(const LiveActor* actor, const char*);
 sead::Matrix34f* getJointMtxPtr(const LiveActor* actor, const char*);  // return type might be const
 sead::Matrix34f* getJointMtxPtrByIndex(const LiveActor* actor, s32);
 void getJointLocalTrans(sead::Vector3f*, const LiveActor* actor, const char*);
+void getJointLocalTrans(sead::Vector3f*, const ModelKeeper* modelKeeper, const char*);
 void calcJointPos(sead::Vector3f*, const LiveActor* actor, const char*);
 void calcJointOffsetPos(sead::Vector3f*, const LiveActor* actor, const char*,
                         const sead::Vector3f&);

@@ -102,6 +102,7 @@ bool requestStartDemoJango(al::LiveActor*);
 void requestEndDemoJango(const al::LiveActor*);
 bool requestStartDemoTitleLogo(const al::LiveActor*);
 bool requestStartDemoGoToEnding(al::LiveActor*);
+bool tryStartEventCutSceneDemo(al::LiveActor*);
 
 bool isActiveDemo(const al::LiveActor*);
 bool isActiveDemo(const al::Scene*);

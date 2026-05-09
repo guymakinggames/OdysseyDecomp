@@ -18,6 +18,7 @@ public:
 
     void attachToHostJoint(const al::LiveActor* actor, const char* jointName);
     bool isEnter() const;
+    void setNoStart(bool isNoStart) { _110 = isNoStart; }
 
     void exeWait();
     void exeEnter();
