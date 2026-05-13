@@ -23,7 +23,6 @@ class MapTerrainLayout;
 class TalkMessage;
 
 enum IconType : u32 {
-    None,
     Flag,
     FlagDisable,
     Home,
@@ -39,6 +38,7 @@ enum IconType : u32 {
     ScenarioHome,
     HintRock1,
     HintRock2,
+    Cap,
     Luigi,
     Poet,
     Scenario2,
@@ -46,12 +46,13 @@ enum IconType : u32 {
 };
 
 struct MapIconLayout {
-    MapIconLayout(s32 a, s32 b, al::SimpleLayoutAppearWaitEnd* c)
+    MapIconLayout() = default;
+    MapIconLayout(s32 a, s32 b, al::LayoutActor* c)
         : fieldA(a), fieldB(b), layout(c) {}
 
-    s32 fieldA = 0;
-    s32 fieldB = 0;
-    al::SimpleLayoutAppearWaitEnd* layout = nullptr;
+    s32 fieldA;
+    s32 fieldB;
+    al::LayoutActor* layout;
 };
 
 struct MapIconInfo {
@@ -137,31 +138,31 @@ private:
     MapTerrainLayout* mMapTerrainLayout = nullptr;
     TalkMessage* mTalkMessage = nullptr;
 
-    void* mPointers = nullptr;
+    MapIconLayout* mCheckpointIconLayouts = nullptr;
 
     s32 mCheckpointNumMaxInWorld = 0;
-    MapIconLayout* mMapIconLayoutAnother = nullptr;
-    MapIconLayout* mHintDecideIconLayout = nullptr;
+    MapIconLayout* mHomeIconLayout = nullptr;
+    MapIconLayout* mHintIconLayouts = nullptr;
 
     s32 mHintNumMax = 0;
-    MapIconLayout* mPointersvc2 = nullptr;
+    MapIconLayout* mShopIconLayouts = nullptr;
 
     s32 mCalcShopNum = 0;
-    MapIconLayout* mMapIconLayoutSomething = nullptr;
+    MapIconLayout* mMiniGameIconLayouts = nullptr;
 
     s32 mMiniGameNumMax = 0;
-    MapIconLayout* mNaaMapIconLayout = nullptr;
-    MapIconLayout* mNeeMapIconLayout = nullptr;
-    MapIconLayout* mMapIconLayout = nullptr;
+    MapIconLayout* mRaceStartIconLayout = nullptr;
+    MapIconLayout* mRaceGoalIconLayout = nullptr;
+    MapIconLayout* mScenarioIconLayouts = nullptr;
 
     s32 mMainScenarioNumMax = 0;
-    MapIconLayout* mMoonRockLayout = nullptr;
+    MapIconLayout* mMoonRockIconLayouts = nullptr;
 
     s32 mHintMoonRockNumMax = 0;
-    MapIconLayout* mMapIconLayoutA = nullptr;
-    MapIconLayout* mMapIconLayoutB = nullptr;
-    MapIconLayout* mMapIconLayoutC = nullptr;
-    MapIconLayout* mMapIconLayoutD = nullptr;
+    MapIconLayout* mJangoIconLayout = nullptr;
+    MapIconLayout* mTimeBalloonIconLayout = nullptr;
+    MapIconLayout* mPoetterIconLayout = nullptr;
+    MapIconLayout* mUnusedIconLayout = nullptr;
     MapIconInfo* mMapIconInfo = nullptr;
 
     s32 mMapIconInfoSize = 0;
@@ -187,6 +188,8 @@ private:
     bool mIsResetTransform;
     bool mIsSharila;
 };
+
+static_assert(sizeof(MapLayout) == 0x298);
 
 void setPanelName(al::LayoutActor* layoutActor, const char* name, s32 id);
 bool trySetBalloon(al::LayoutActor* layoutActor, const al::LiveActor* actor,

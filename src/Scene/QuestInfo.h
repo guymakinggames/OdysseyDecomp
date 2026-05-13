@@ -1,6 +1,7 @@
 #pragma once
 
 #include <basis/seadTypes.h>
+#include <math/seadVector.h>
 #include <prim/seadSafeString.h>
 
 #include "Library/Scene/IUseSceneObjHolder.h"
@@ -27,18 +28,22 @@ public:
     al::SceneObjHolder* getSceneObjHolder() const override { return mSceneObjHolder; }
 
     s32 getQuestNo() const { return mQuestNo; }
+    const sead::Vector3f& getTrans() const { return mTrans; }
+    const sead::FixedSafeString<128>& getMapLabel() const { return mMapLabel; }
 
 private:
     s32 mQuestNo;
-    void* filler_10;
+    sead::Vector3f mTrans;
+    bool mIsValid;
     bool mIsMainQuest;
+    u8 padding[6];
     al::SceneObjHolder* mSceneObjHolder;
-    sead::SafeString* mScenarioName;
-    void* filler_30[0x12];
-    sead::SafeString* mStageName;
-    void* filler_c8[0x12];
+    sead::FixedSafeString<128> mMapLabel;
+    sead::FixedSafeString<128> mObjId;
     bool mIsSingle;
-    void* filler_160[0x26];
+    u8 padding2[7];
+    sead::FixedSafeString<128> mPlacementId;
+    sead::FixedSafeString<128> mStageName;
 };
 
 static_assert(sizeof(QuestInfo) == 0x290);

@@ -29,5 +29,12 @@ public:
     s32 getGroupNum() const;
     void calcAnim(bool);
     void draw();
+
+    nn::ui2d::Layout* getLayout() const { return mLayout; }
+
+private:
+    u64 _0 = 0;
+    u64 _8 = 0;
+    nn::ui2d::Layout* mLayout = nullptr;
 };
 }  // namespace al

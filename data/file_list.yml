@@ -54019,15 +54019,15 @@ Layout/MapLayout.o:
   - offset: 0x1f190c
     size: 488
     label: _ZN9MapLayout16appearAmiiboHintEv
-    status: NonMatchingMajor
+    status: Matching
   - offset: 0x1f1af4
     size: 16
     label: _ZN9MapLayout3endEv
     status: Matching
   - offset: 0x1f1b04
     size: 844
-    label: ''
-    status: NotDecompiled
+    label: _Z13trySetBalloonPN2al11LayoutActorEPKNS_9LiveActorERKN4sead8Matrix44IfEE
+    status: NonMatchingMajor
   - offset: 0x1f1e50
     size: 1840
     label: _ZN9MapLayout21updatePlayerPosLayoutEv
@@ -54035,11 +54035,11 @@ Layout/MapLayout.o:
   - offset: 0x1f2580
     size: 488
     label: _ZN9MapLayout14appearWithHintEv
-    status: NonMatchingMajor
+    status: Matching
   - offset: 0x1f2768
     size: 528
     label: _ZN9MapLayout18appearMoonRockDemoEi
-    status: NonMatchingMajor
+    status: Matching
   - offset: 0x1f2978
     size: 16
     label: _ZN9MapLayout20appearCollectionListEv
@@ -54151,7 +54151,7 @@ Layout/MapLayout.o:
   - offset: 0x1f5ae8
     size: 504
     label: _ZN9MapLayout14updateIconLineEPN2al11LayoutActorERKN4sead7Vector3IfEERKNS3_7Vector2IfEE
-    status: NonMatchingMajor
+    status: Matching
   - offset: 0x1f5ce0
     size: 192
     label: _ZN2rs14calcTransOnMapEPN4sead7Vector2IfEERKNS0_7Vector3IfEERKNS0_8Matrix44IfEERKS2_ff
@@ -54289,7 +54289,7 @@ Layout/MapLayout.o:
   - offset: 0x1f6b88
     size: 268
     label: _ZN2nn4ui2d11DynamicCastIPN3eui9TextBoxExENS0_4PaneEEET_PT0_
-    status: NotDecompiled
+    status: Matching
     lazy: true
   - offset: 0x1f6c94
     size: 200

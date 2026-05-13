@@ -1,0 +1,84 @@
+diff --git a/include/nn/ui2d/Layout.h b/include/nn/ui2d/Layout.h
+index 5acabf6..7f71d92 100644
+--- a/include/nn/ui2d/Layout.h
++++ b/include/nn/ui2d/Layout.h
+@@ -35,6 +35,7 @@ public:
+ 
+     u64 _10;
+     u64 _18;
++    Pane* mRootPane;
+     u64 _20;
+     u64 _28;
+     u64 _30;
+@@ -47,6 +48,8 @@ public:
+ 
+     static void* g_pAllocateFunction;
+     static void* g_pFreeFunction;
++
++    Pane* getRootPane() const { return mRootPane; }
+ };
+ }  // namespace ui2d
+ }  // namespace nn
+diff --git a/include/nn/ui2d/Pane.h b/include/nn/ui2d/Pane.h
+index 5e7aa95..8fd5089 100644
+--- a/include/nn/ui2d/Pane.h
++++ b/include/nn/ui2d/Pane.h
+@@ -5,6 +5,8 @@
+ 
+ #pragma once
+ 
++#include <type_traits>
++
+ #include <nn/font/font_Util.h>
+ #include <nn/types.h>
+ 
+@@ -14,13 +16,13 @@ class Layout;
+ 
+ class Pane {
+ public:
+-    NN_RUNTIME_TYPEINFO_BASE();
+-
+     Pane();
+     Pane(const Pane&);
+ 
+     virtual ~Pane();
+ 
++    NN_RUNTIME_TYPEINFO_BASE();
++
+     virtual s32 GetVertexColor(s32);
+     virtual u8 GetColorElement(s32);
+     virtual void SetColorElement(u32, u8);
+@@ -31,6 +33,7 @@ public:
+ 
+     virtual void BindAnimation(AnimTransform*, bool, bool);
+     virtual void UnbindAnimation(AnimTransform*, bool);
++    virtual Pane* FindPaneByName(const char*, bool);
+ 
+     void Initialize();
+     void SetName(const char*);
+@@ -76,4 +79,25 @@ public:
+     u16 _DA;
+     u32 _DC;
+ };
++
++template <typename T, typename U>
++__attribute__((noinline))
++T DynamicCast(U* pane) {
++    using Target = typename std::remove_pointer<T>::type;
++    const nn::font::detail::RuntimeTypeInfo* targetTypeInfo = Target::GetRuntimeTypeInfoStatic();
++
++    if (pane != nullptr) {
++        const nn::font::detail::RuntimeTypeInfo* typeInfo = pane->GetRuntimeTypeInfo();
++        if (typeInfo == nullptr)
++            return nullptr;
++
++        while (typeInfo != targetTypeInfo) {
++            typeInfo = typeInfo->m_ParentTypeInfo;
++            if (typeInfo == nullptr)
++                return nullptr;
++        }
++    }
++
++    return static_cast<T>(pane);
++}
+ }  // namespace nn::ui2d
