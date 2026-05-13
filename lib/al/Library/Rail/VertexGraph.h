@@ -58,7 +58,11 @@ public:
 
     s32 getEdgeCount() const { return mEdges.size(); }
 
+    bool hasEdge() const { return mEdges.size() > 0; }
+
     Edge* getEdge(s32 index) const { return mEdges[index]; }
+
+    Edge** getEdgeArray() const { return mEdges.data(); }
 
     void eraseEdge(s32 index) { mEdges.erase(index); }
 
@@ -139,6 +143,12 @@ struct Graph::VertexInfo {
     Vertex* vertex;
     s32 prevIndex;
     f32 weight;
+
+    Vertex* getVertex() const { return vertex; }
+
+    s32 getPrevIndex() const { return prevIndex; }
+
+    f32 getWeight() const { return weight; }
 
     inline bool operator<(const VertexInfo& rhs) const {
         return vertex->getIndex() < rhs.vertex->getIndex();

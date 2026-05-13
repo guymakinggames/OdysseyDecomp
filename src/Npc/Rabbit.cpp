@@ -61,6 +61,52 @@ NERVE_IMPL(Rabbit, Disappear)
 NERVES_MAKE_STRUCT(Rabbit, StandbyWait, Reset, Move, Jump, Turn, TurnReverse, Wait, Rest, Provoke,
                    EndTired, JumpPath, MoveStart, Break, Find, WaitTired, StandbyRest,
                    CatchToGiveMoon, CatchToGiveItem, EndJump, GiveMoon, GiveItem, Disappear)
+
+RabbitGraphVertex* toRabbitVertex(al::Graph::Vertex* vertex) {
+    return static_cast<RabbitGraphVertex*>(vertex);
+}
+
+RabbitGraphVertex* toRabbitVertex(al::Graph::PosVertex* vertex) {
+    return static_cast<RabbitGraphVertex*>(vertex);
+}
+
+RabbitGraphEdge* toRabbitEdge(al::Graph::Edge* edge) {
+    return static_cast<RabbitGraphEdge*>(edge);
+}
+
+f32 calcDistanceToPlayerBody(const al::LiveActor* actor, const sead::Vector3f& pos) {
+    return (rs::getPlayerBodyPos(actor) - pos).length();
+}
+
+f32 calcPlayerChaseDistance(const al::LiveActor* actor) {
+    return rs::isPlayerHackTRex(actor) ? 3000.0f : 900.0f;
+}
+
+bool isSwoonStartEnd(const Rabbit* rabbit) {
+    return al::isActionPlaying(rabbit, "SwoonStart") && al::isActionEnd(rabbit);
+}
+
+bool isRunActionPlaying(const Rabbit* rabbit) {
+    return al::isActionPlaying(rabbit, "RunFine") || al::isActionPlaying(rabbit, "RunTired") ||
+           al::isActionPlaying(rabbit, "RunTiredSlow");
+}
+
+void slerpQuatToGround(Rabbit* rabbit, f32 rate) {
+    const sead::Vector3f& groundNormal = al::getCollidedGroundNormal(rabbit);
+    sead::Vector3f front;
+    sead::Quatf targetQuat;
+    al::calcQuatFront(&front, rabbit);
+    al::makeQuatUpFront(&targetQuat, groundNormal, front);
+    al::slerpQuat(al::getQuatPtr(rabbit), al::getQuat(rabbit), targetQuat, rate);
+}
+
+void slerpQuatToWorldUpFront(Rabbit* rabbit, f32 rate) {
+    sead::Vector3f front;
+    sead::Quatf targetQuat;
+    al::calcQuatFront(&front, rabbit);
+    al::makeQuatUpFront(&targetQuat, sead::Vector3f::ey, front);
+    al::slerpQuat(al::getQuatPtr(rabbit), al::getQuat(rabbit), targetQuat, rate);
+}
 }  // namespace
 
 Rabbit::Rabbit(const char* name, const al::Graph* graph, bool isRabbitGraphMoon)
@@ -70,7 +116,8 @@ void Rabbit::init(const al::ActorInitInfo& initInfo) {
     using RabbitFunctor = al::FunctorV0M<Rabbit*, void (Rabbit::*)()>;
 
     al::initActorWithArchiveName(this, initInfo, "Rabbit", mIsRabbitGraphMoon ? "Moon" : nullptr);
-    vertexA = (RabbitGraphVertex*)al::findNearestPosVertex(mGraph, al::getTrans(this), -1.0f);
+    mCurrentVertex =
+        (RabbitGraphVertex*)al::findNearestPosVertex(mGraph, al::getTrans(this), -1.0f);
     al::tryGetArg(&mMoveType, initInfo, "MoveType");
     al::tryGetArg(&mAppearItemNum, initInfo, "AppearItemNum");
     al::tryGetArg(&mIsEnableAutoUpdateShadowMaskLength, initInfo,
@@ -136,10 +183,9 @@ void Rabbit::init(const al::ActorInitInfo& initInfo) {
     spring3->setFriction(0.6f);
     spring3->setLimitDegree(45.0f);
     mJointSpringArray.pushBack(spring3);
-    al::initJointLocalZRotator(this, &floatA, "Spine");
+    al::initJointLocalZRotator(this, &mSpineAngle, "Spine");
     mShadowDropLength = al::getShadowMaskDropLength(this, "Hip");
 
-    auto asd = RabbitFunctor(this, &Rabbit::appearReset);
     if (!al::listenStageSwitchOnOff(this, "SwitchRabbitAppear",
                                     RabbitFunctor(this, &Rabbit::resetParam),
                                     RabbitFunctor(this, &Rabbit::kill))) {
@@ -148,7 +194,7 @@ void Rabbit::init(const al::ActorInitInfo& initInfo) {
         mEnemyStateReset = new EnemyStateReset(this, initInfo, nullptr);
         al::initNerve(this, &NrvRabbit.StandbyWait, 1);
         al::initNerveState(this, mEnemyStateReset, &NrvRabbit.Reset, "リセット");
-        position.set(al::getTrans(this));
+        mHomePosition.set(al::getTrans(this));
     }
     makeActorDead();
 }
@@ -156,15 +202,15 @@ void Rabbit::init(const al::ActorInitInfo& initInfo) {
 void Rabbit::attackSensor(al::HitSensor* self, al::HitSensor* other) {
     if (al::isSensorEnemyAttack(self) && !rs::sendMsgPushToMotorcycle(other, self)) {
         if (rs::sendMsgRabbitKick(other, self)) {
-            someC = 30;
-            hitSensor2 = other;
+            mKickSensorTimer = 30;
+            mKickSensor = other;
         }
         if (al::isNerve(this, &NrvRabbit.CatchToGiveMoon) ||
             al::isNerve(this, &NrvRabbit.CatchToGiveItem) ||
             al::isNerve(this, &NrvRabbit.GiveMoon) || al::isNerve(this, &NrvRabbit.GiveItem)) {
             rs::sendMsgPushToPlayer(other, self);
         }
-        if (mOtherHitSensor != nullptr && 0 < someD) {
+        if (mOtherHitSensor != nullptr && 0 < mExplosionSensorTimer) {
             if (al::getSensorHost(mOtherHitSensor) == al::getSensorHost(other))
                 return;
         }
@@ -185,7 +231,7 @@ bool Rabbit::receiveMsg(const al::SensorMsg* message, al::HitSensor* other, al::
     }
     if (al::isMsgExplosion(message)) {
         mOtherHitSensor = other;
-        someD = 0x78;
+        mExplosionSensorTimer = 0x78;
         return false;
     }
     if (!rs::isMsgCapAttack(message) && !rs::isMsgHosuiAttack(message) &&
@@ -203,22 +249,22 @@ bool Rabbit::receiveMsg(const al::SensorMsg* message, al::HitSensor* other, al::
              !al::isNerve(this, &NrvRabbit.Move) && !al::isNerve(this, &NrvRabbit.Break) &&
              !al::isNerve(this, &NrvRabbit.EndJump) && !al::isNerve(this, &NrvRabbit.Provoke) &&
              !al::isNerve(this, &NrvRabbit.Jump) && !al::isNerve(this, &NrvRabbit.JumpPath) &&
-             !al::isNerve(this, &NrvRabbit.Wait) && !isNerve(this, &NrvRabbit.WaitTired) &&
+             !al::isNerve(this, &NrvRabbit.Wait) && !al::isNerve(this, &NrvRabbit.WaitTired) &&
              !al::isNerve(this, &NrvRabbit.Rest))) {
             return false;
         }
         if (mIsDisableCatchByBindPlayer && rs::isPlayerBinding(this))
             return false;
-        if (!someBools) {
+        if (!mIsCaught) {
             rs::requestHitReactionToAttacker(message, self, other);
-            someBools = true;
+            mIsCaught = true;
             al::startHitReaction(this, "接触");
             if ((al::isNerve(this, &NrvRabbit.Jump) || al::isNerve(this, &NrvRabbit.JumpPath)) &&
                 al::tryStartActionIfNotPlaying(this, "SwoonStart")) {
                 al::setActionFrameRate(this, 1.0f);
             }
         }
-        otherHitSensor = other;
+        mRewardReceiverSensor = other;
         if (al::isNerve(this, &NrvRabbit.StandbyWait) ||
             al::isNerve(this, &NrvRabbit.StandbyRest) || al::isNerve(this, &NrvRabbit.Find) ||
             al::isNerve(this, &NrvRabbit.Turn) || al::isNerve(this, &NrvRabbit.MoveStart) ||
@@ -234,9 +280,9 @@ bool Rabbit::receiveMsg(const al::SensorMsg* message, al::HitSensor* other, al::
         }
         return true;
     }
-    if ((hitSensor2 != nullptr && hitSensor2 == other && someC >= 1) ||
+    if ((mKickSensor != nullptr && mKickSensor == other && mKickSensorTimer >= 1) ||
         al::isActionPlaying(this, "SwoonStart") ||
-        (al::isNerve(this, &NrvRabbit.Move) && 5 >= someA)) {
+        (al::isNerve(this, &NrvRabbit.Move) && 5 >= mMoveFrame)) {
         return true;
     }
     if (!al::isNerve(this, &NrvRabbit.StandbyWait) && !al::isNerve(this, &NrvRabbit.StandbyRest) &&
@@ -254,9 +300,9 @@ bool Rabbit::receiveMsg(const al::SensorMsg* message, al::HitSensor* other, al::
     } else {
         al::startHitReaction(this, "投げ物ヒット");
         rs::requestHitReactionToAttacker(message, self, other);
-        someB = 300;
-        clipA = true;
-        clipB = true;
+        mTiredTimer = 300;
+        mIsTired = true;
+        mIsSwoon = true;
         mStamina = 1200.0f;
         if (!al::tryStartActionIfNotPlaying(this, "SwoonStart"))
             return true;
@@ -268,38 +314,38 @@ bool Rabbit::receiveMsg(const al::SensorMsg* message, al::HitSensor* other, al::
 void Rabbit::control() {
     if (!al::isNerve(this, &NrvRabbit.Move) && !al::isNerve(this, &NrvRabbit.Jump) &&
         !al::isNerve(this, &NrvRabbit.Turn) && !al::isNerve(this, &NrvRabbit.TurnReverse)) {
-        someA = 0;
+        mMoveFrame = 0;
     } else {
-        someA++;
+        mMoveFrame++;
     }
 
-    if (clipA) {
-        if (0 < someB)
-            someB--;
+    if (mIsTired) {
+        if (0 < mTiredTimer)
+            mTiredTimer--;
         if ((al::isNerve(this, &NrvRabbit.Move) || al::isNerve(this, &NrvRabbit.Wait) ||
              al::isNerve(this, &NrvRabbit.Rest) || al::isNerve(this, &NrvRabbit.Provoke)) &&
-            someB == 0) {
-            clipA = false;
-            clipB = false;
+            mTiredTimer == 0) {
+            mIsTired = false;
+            mIsSwoon = false;
             al::setNerve(this, &NrvRabbit.EndTired);
             return;
         }
     }
 
-    if (0 < someC) {
-        someC--;
-        if (someC == 0)
-            hitSensor2 = nullptr;
+    if (0 < mKickSensorTimer) {
+        mKickSensorTimer--;
+        if (mKickSensorTimer == 0)
+            mKickSensor = nullptr;
     }
 
-    if (0 < someD) {
-        someD--;
-        if (someD == 0)
+    if (0 < mExplosionSensorTimer) {
+        mExplosionSensorTimer--;
+        if (mExplosionSensorTimer == 0)
             mOtherHitSensor = nullptr;
     }
 
     f32 frameRate;
-    if (((someB > 0 || 400.0f > mStamina) && !al::isNerve(this, &NrvRabbit.Provoke) &&
+    if (((mTiredTimer > 0 || 400.0f > mStamina) && !al::isNerve(this, &NrvRabbit.Provoke) &&
          !al::isNerve(this, &NrvRabbit.Wait) &&
          (!al::isNerve(this, &NrvRabbit.WaitTired) || al::isActionPlaying(this, "WaitSwoon"))) &&
         (!al::isNerve(this, &NrvRabbit.Rest) && !al::isNerve(this, &NrvRabbit.CatchToGiveItem) &&
@@ -309,10 +355,10 @@ void Rabbit::control() {
         if (!al::isEffectEmitting(this, "Sweat"))
             al::emitEffect(this, "Sweat", nullptr);
         if (al::isActionPlaying(this, "RunFine")) {
-            al::startAction(this, someB > 0 ? "RunTiredSlow" : "RunTired");
+            al::startAction(this, mTiredTimer > 0 ? "RunTiredSlow" : "RunTired");
             frameRate = 0.8f;
             al::setActionFrameRate(this, frameRate);
-        } else if (someB > 0 && al::isActionPlaying(this, "RunTired")) {
+        } else if (mTiredTimer > 0 && al::isActionPlaying(this, "RunTired")) {
             al::startAction(this, "RunTiredSlow");
             frameRate = 0.8f;
             al::setActionFrameRate(this, frameRate);
@@ -343,7 +389,9 @@ void Rabbit::control() {
         if (alCollisionUtil::getFirstPolyOnArrow(this, &poly, &triangle, position,
                                                  -sead::Vector3f::ey * mShadowDropLength, nullptr,
                                                  nullptr)) {
-            f32 newLength = sead::Mathf::clampMin((poly - position).length(), 10.0f);
+            sead::Vector3f shadowLength = poly;
+            shadowLength -= position;
+            f32 newLength = sead::Mathf::clampMin(shadowLength.length(), 10.0f);
             al::setShadowMaskDropLength(this, newLength, "Hip");
 
         } else {
@@ -376,16 +424,17 @@ void Rabbit::appearReset() {
     if (al::isAlive(this))
         return;
     al::LiveActor::appear();
-    al::resetPosition(this, position);
-    vertexA = (RabbitGraphVertex*)al::findNearestPosVertex(mGraph, al::getTrans(this), -1.0f);
+    al::resetPosition(this, mHomePosition);
+    mCurrentVertex =
+        (RabbitGraphVertex*)al::findNearestPosVertex(mGraph, al::getTrans(this), -1.0f);
     resetParam();
     al::setNerve(this, &NrvRabbit.Reset);
 }
 
 void Rabbit::resetParam() {
-    someB = 0;
-    clipA = false;
-    clipB = false;
+    mTiredTimer = 0;
+    mIsTired = false;
+    mIsSwoon = false;
     mStamina = 1200.0f;
 }
 
@@ -415,113 +464,173 @@ void Rabbit::setNerveJumpOrMoveStart(al::LiveActor* actor, const RabbitGraphVert
     setNerveJumpOrMove(actor, va, vb, true);
 }
 
-void Rabbit::onMoveEndUpdateCurrentVertexAndNextNerve() { /*
-   if (!vertexB->getBool()) {
-     vertexA = vertexB;
-     vertexB = nullptr;
-     RabbitGraphVertex * vert = (RabbitGraphVertex *)tryFindNextVertex();
-     sead::vector3f playerPos = rs::getPlayerBodyPos(this);
-     sead::vector3f pos = al::getTrans(this);
-     if (vert != nullptr) {
-       playerPos-=pos;
-       f32 distance = rs::isPlayerHackTRex(this)? 3000.0f:900.0f;
-       if (playerPos.length() < distance) {
-         vertexB = pRVar2;
-         al::calcFrontDir(&VStack_60,this);
-         pRVar2 = vertexB;
-         local_70.z = (pRVar2->position).z;
-         local_70.x = (pRVar2->position).x;
-         local_70.y = (pRVar2->position).y;
-         pVVar3 = al::getTrans(this);
-         local_70._0_8_ = ZEXT48((uint)(local_70.x - pVVar3->x));
-         local_70.z = local_70.z - pVVar3->z;
-         uVar9 = al::tryNormalizeOrZero(&local_70);
-         if (((uVar9 & 1) == 0) ||
-            (fVar14 = (float)al::calcAngleDegree(&local_70,&VStack_60), fVar14 <= 80.0)) {
-           lVar4 = al::tryFindEdgeStartVertex(&vertexA->vertex,&vertexB->vertex);
-           uVar1 = *(ushort *)(lVar4 + 0x250);
-           if ((uVar1 & 0xff) == 0) {
-             al::validateClipping(this);
-             ppuVar5 = &PTR_PTR_exeMove_7101d628f0;
-           }
-           else {
-             al::invalidateClipping(this);
-             if (uVar1 < 0x100) {
-               ppuVar5 = &PTR_PTR_exeJumpPath_7101d62930;
-             }
-             else {
-               ppuVar5 = &PTR_PTR_exeJump_7101d628f8;
-             }
-           }
-         }
-         else {
-           ppuVar5 = &PTR_PTR_exeTurnReverse_7101d62908;
-           if (vertexB != pRVar8) {
-             ppuVar5 = &PTR_PTR_exeTurn_7101d62900;
-           }
-         }
-         al::setNerve(this,(Nerve *)ppuVar5);
-         return;
-       }
-     }
-     al::validateClipping(this);
-     if (!al::isNerve(this,&NrvRabbit.Move)||
-        (!al::isActionPlaying(this,"RunFine") &&
-          !al::isActionPlaying(this,"RunTired") &&
-         !al::isActionPlaying(this,"RunTiredSlow"))) {
-       ppuVar5 = &PTR_PTR_exeWaitTired_7101d62950;
-       if (someB < 1) {
-         ppuVar5 = &PTR_PTR_exeWait_7101d62910;
-       }
-     }
-     else {
-       ppuVar5 = &PTR_PTR_exeBreak_7101d62940;
-     }
-   }
-   else {
-     if ((pRVar2->vertex).mEdges.size < 1) {
-       pRVar8 = (RabbitGraphVertex *)0x0;
-     }
-     else {
+void Rabbit::onMoveEndUpdateCurrentVertexAndNextNerve() {
+    if (mNextVertex->getBool2()) {
+        RabbitGraphVertex* selected;
+        if (mNextVertex->getEdgeCount() <= 0) {
+            selected = nullptr;
+        } else {
+            f32 maxDistance = 0.0f;
+            selected = nullptr;
+            s32 i = 0;
+            do {
+                RabbitGraphEdge* edge = toRabbitEdge(mNextVertex->getEdge(i));
+                RabbitGraphVertex* nextVertex = edge->getVertex2();
+                if (nextVertex != mCurrentVertex && edge->getVertex1() == mNextVertex) {
+                    f32 distance = calcDistanceToPlayerBody(this, nextVertex->getPos());
+                    if (distance > maxDistance) {
+                        maxDistance = distance;
+                        selected = nextVertex;
+                    }
+                }
+                i++;
+            } while (i < mNextVertex->getEdgeCount());
+        }
 
-       fVar14 = 0.0;
-       uVar9 = 0;
-       pRVar7 = (RabbitGraphVertex *)0x0;
-       do {
-         if (uVar9 < (uint)(pRVar2->vertex).mEdges.size) {
-           pRVar6 = (pRVar2->vertex).mEdges.array[uVar9];
-         }
-         else {
-           pRVar6 = (RabbitGraphVertex *)0x0;
-         }
-         pRVar10 = *(RabbitGraphVertex **)&(pRVar6->vertex).index;
-         pRVar8 = pRVar7;
-         fVar11 = fVar14;
-         if ((pRVar10 != vertexA) &&
-            ((RabbitGraphVertex *)(pRVar6->vertex).mEdges.array == pRVar2)) {
-           pVVar3 = rs::getPlayerBodyPos(this);
-           fVar12 = pVVar3->y - (pRVar10->position).y;
-           fVar11 = pVVar3->x - (pRVar10->position).x;
-           fVar13 = pVVar3->z - (pRVar10->position).z;
-           fVar11 = SQRT(fVar11 * fVar11 + fVar12 * fVar12 + fVar13 * fVar13);
-           pRVar2 = vertexB;
-           pRVar8 = pRVar10;
-           if (fVar11 <= fVar14) {
-             pRVar8 = pRVar7;
-             fVar11 = fVar14;
-           }
-         }
-         fVar14 = fVar11;
-         uVar9 = uVar9 + 1;
-         pRVar7 = pRVar8;
-       } while ((long)uVar9 < (long)(pRVar2->vertex).mEdges.size);
-     }
-     setNerveJumpOrMove(this, vertexA, vertexB, false);
-   }
-   al::setNerve((IUseNerve *)this,(Nerve *)ppuVar5);*/
+        mCurrentVertex = mNextVertex;
+        mNextVertex = selected;
+        setNerveJumpOrMove(this, mCurrentVertex, mNextVertex, false);
+        return;
+    }
+
+    RabbitGraphVertex* previousVertex = mCurrentVertex;
+    mCurrentVertex = mNextVertex;
+    mNextVertex = nullptr;
+
+    RabbitGraphVertex* nextVertex = tryFindNextVertex();
+    sead::Vector3f playerOffset = rs::getPlayerBodyPos(this);
+    playerOffset -= al::getTrans(this);
+    if (nextVertex != nullptr && playerOffset.length() < calcPlayerChaseDistance(this)) {
+        mNextVertex = nextVertex;
+
+        sead::Vector3f front;
+        al::calcFrontDir(&front, this);
+        sead::Vector3f direction = mNextVertex->getPos();
+        direction -= al::getTrans(this);
+        direction.y = 0.0f;
+
+        if (!al::tryNormalizeOrZero(&direction) || al::calcAngleDegree(direction, front) <= 80.0f) {
+            setNerveJumpOrMove(this, mCurrentVertex, mNextVertex, false);
+        } else {
+            al::Nerve* nerve = &NrvRabbit.Turn;
+            if (mNextVertex == previousVertex)
+                nerve = &NrvRabbit.TurnReverse;
+            al::setNerve(this, nerve);
+        }
+        return;
+    }
+
+    al::validateClipping(this);
+    if (al::isNerve(this, &NrvRabbit.Move) && isRunActionPlaying(this)) {
+        al::setNerve(this, &NrvRabbit.Break);
+        return;
+    }
+
+    al::Nerve* nerve = &NrvRabbit.Wait;
+    if (mTiredTimer > 0)
+        nerve = &NrvRabbit.WaitTired;
+    al::setNerve(this, nerve);
 }
 
-void Rabbit::tryFindNextVertex() {}
+RabbitGraphVertex* Rabbit::tryFindNextVertex() {
+    if (mMoveType != 0) {
+        if (mMoveType != 2) {
+            if (mMoveType != 1)
+                return nullptr;
+
+            mDestinationVertex = toRabbitVertex(
+                al::findNearestPosVertex(mGraph, rs::getPlayerBodyPos(this), -1.0f));
+        } else {
+            RabbitGraphVertex* selected = nullptr;
+            f32 maxDistance = 0.0f;
+            if (mDestinations.size() > 0) {
+                for (s32 i = 0; i < mDestinations.size(); i++) {
+                    RabbitGraphVertex* vertex = mDestinations[i];
+                    f32 distance = calcDistanceToPlayerBody(this, vertex->getPos());
+                    if (distance > maxDistance) {
+                        maxDistance = distance;
+                        selected = vertex;
+                    }
+                }
+            } else {
+                for (s32 i = 0; i < mGraph->getVertexCount(); i++) {
+                    RabbitGraphVertex* vertex = toRabbitVertex(mGraph->getVertex(i));
+                    if (vertex->getBool2())
+                        continue;
+
+                    f32 distance = calcDistanceToPlayerBody(this, vertex->getPos());
+                    if (distance > maxDistance) {
+                        maxDistance = distance;
+                        selected = vertex;
+                    }
+                }
+            }
+
+            if (selected != nullptr)
+                mDestinationVertex = selected;
+        }
+    } else {
+        s32 edgeCount = mCurrentVertex->getEdgeCount();
+        sead::FixedPtrArray<RabbitGraphVertex, 10> candidates;
+        if (edgeCount > 0) {
+            for (s32 i = 0; i != edgeCount; i++) {
+                RabbitGraphEdge* edge = toRabbitEdge(mCurrentVertex->getEdge(i));
+                if (edge->getVertex1() == mCurrentVertex && edge->getWeight() < 65536.0f)
+                    candidates.pushBack(edge->getVertex2());
+            }
+        }
+
+        s32 index = al::getRandom(candidates.size()) % candidates.size();
+        if (u32(candidates.size()) > u32(index))
+            return candidates(index);
+        return nullptr;
+    }
+
+    if (mDestinationVertex != nullptr) {
+        RabbitGraphVertex* destinationVertex = mDestinationVertex;
+        sead::FixedObjArray<al::Graph::VertexInfo, 512> path;
+        if (al::calcShortestPath(&path, mGraph, mCurrentVertex->getIndex(),
+                                 destinationVertex->getIndex())) {
+            RabbitGraphVertex* nextVertex = nullptr;
+            for (s32 index = destinationVertex->getIndex();;) {
+                if (index < 0)
+                    break;
+
+                al::Graph::VertexInfo* info = path(index);
+                index = info->prevIndex;
+                if (index < 0)
+                    continue;
+
+                if (info->weight < 65536.0f)
+                    nextVertex = toRabbitVertex(info->vertex);
+            }
+
+            if (nextVertex != nullptr)
+                return nextVertex;
+        }
+    }
+
+    RabbitGraphVertex* selected = nullptr;
+    f32 maxDistance = 0.0f;
+    s32 lastEdgeIndex = mCurrentVertex->getEdgeCount() - 1;
+    if (lastEdgeIndex < 0)
+        return nullptr;
+
+    for (s32 i = 0;; i++) {
+        RabbitGraphEdge* edge = toRabbitEdge(mCurrentVertex->getEdge(i));
+        if (edge->getVertex1() == mCurrentVertex) {
+            sead::Vector3f playerOffset = rs::getPlayerBodyPos(this) - edge->getVertex2()->getPos();
+            if (playerOffset.length() > maxDistance) {
+                maxDistance = playerOffset.length();
+                selected = edge->getVertex2();
+            }
+        }
+        if (lastEdgeIndex == i)
+            break;
+    }
+
+    return selected;
+}
 
 void Rabbit::fall(f32 velocity) {
     if (al::isOnGround(this, 0)) {
@@ -534,21 +643,21 @@ void Rabbit::fall(f32 velocity) {
 }
 
 void Rabbit::reduceStamina() {
-    if (someB == 0) {
+    if (mTiredTimer == 0) {
         mStamina = sead::Mathf::max(mStamina + -1.0f, 0.0f);
         if (mStamina == 0.0) {
-            clipA = true;
-            someB = 300;
+            mIsTired = true;
+            mTiredTimer = 300;
             mStamina = 1200.0f;
         }
     }
 }
 
 void Rabbit::trySetPoseGraphMoveDir(f32 delay) {
-    if (vertexA == nullptr || vertexB == nullptr)
+    if (mCurrentVertex == nullptr || mNextVertex == nullptr)
         return;
 
-    sead::Vector3f position = vertexB->getPos();
+    sead::Vector3f position = mNextVertex->getPos();
     position -= al::getTrans(this);
     f32 length = sead::Mathf::clamp(position.length() / 500.0f, 0.0f, 1.0f);
     position.y = 0.0f;
@@ -556,15 +665,16 @@ void Rabbit::trySetPoseGraphMoveDir(f32 delay) {
     if (!al::tryNormalizeOrZero(&position))
         return;
 
-    if (1.0f - length > 0.0f && vertexB->getEdgeCount() == 4) {
+    if (1.0f - length > 0.0f && mNextVertex->getEdgeCount() == 4) {
+        al::Graph::Edge** edges = mNextVertex->getEdgeArray();
+        RabbitGraphVertex* currentVertex = mCurrentVertex;
         RabbitGraphVertex* selected = nullptr;
-        for (s32 i = 0; i < vertexB->getEdgeCount(); i++) {
-            RabbitGraphVertex* v2 = (RabbitGraphVertex*)vertexB->getEdge(i)->getVertex2();
-            if (v2 != vertexB && v2 != vertexA)
-                selected = v2;
+        for (s32 i = 0; i < mNextVertex->getEdgeCount(); i++) {
+            RabbitGraphVertex* v2 = toRabbitVertex(edges[i]->getVertex2());
+            selected = v2 != mNextVertex && v2 != currentVertex ? v2 : selected;
         }
         sead::Vector3f nipon = selected->getPos();
-        nipon -= vertexB->getPos();
+        nipon -= mNextVertex->getPos();
         nipon.y = 0;
         if (al::tryNormalizeOrZero(&nipon)) {
             f32 fVar11 = (1.0f - length) * 0.5f;
@@ -579,16 +689,16 @@ void Rabbit::trySetPoseGraphMoveDir(f32 delay) {
     }
 }
 
-inline f32 getJumpSpeed(bool mIsRabbitGraphMoon, s32 someB) {
-    return !mIsRabbitGraphMoon ? 25.0f : someB > 0 ? 12.0f : 20.0f;
+inline f32 getJumpSpeed(bool mIsRabbitGraphMoon, s32 mTiredTimer) {
+    return !mIsRabbitGraphMoon ? 25.0f : mTiredTimer > 0 ? 12.0f : 20.0f;
 }
 
 f32 Rabbit::getMoveSpeed() const {
     if (al::isNerve(this, &NrvRabbit.Jump) || al::isNerve(this, &NrvRabbit.JumpPath))
-        return getJumpSpeed(mIsRabbitGraphMoon, someB);
+        return getJumpSpeed(mIsRabbitGraphMoon, mTiredTimer);
 
-    f32 speed = someB > 0 ? 12.0f : mIsRabbitGraphMoon ? 20.0f : 25.0f;
-    f32 moddifier = sead::Mathf::clamp(someA / 30.0f, 0.0f, 1.0f);
+    f32 speed = mTiredTimer > 0 ? 12.0f : mIsRabbitGraphMoon ? 20.0f : 25.0f;
+    f32 moddifier = sead::Mathf::clamp(mMoveFrame / 30.0f, 0.0f, 1.0f);
     return speed * moddifier;
 }
 
@@ -602,26 +712,26 @@ void Rabbit::exeStandby() {
         if (!al::isNerve(this, &NrvRabbit.StandbyWait)) {
             al::startAction(this, "Rest");
         } else {
-            randomWait = al::getRandom(0x1e0, 0xf0);
+            mRandomWait = al::getRandom(0x1e0, 0xf0);
             al::tryStartActionIfNotPlaying(this, "Wait");
         }
     }
     fall(0.98f);
-    if (vertexA->getBool())
-        al::resetPosition(this, vertexA->getPos());
+    if (mCurrentVertex->getBool())
+        al::resetPosition(this, mCurrentVertex->getPos());
     sead::Vector3f position = rs::getPlayerBodyPos(this);
     position -= al::getTrans(this);
     f32 len = position.length();
     f32 uVar2 = rs::isPlayerHackTRex(this) ? 3000.0f : 1500.0f;
     if (len < uVar2) {
         al::setNerve(this, &NrvRabbit.Find);
-    } else if (!clipA) {
+    } else if (!mIsTired) {
         if (!al::isNerve(this, &NrvRabbit.StandbyWait)) {
             if (!al::isGreaterStep(this, 0xb4))
                 return;
             al::setNerve(this, &NrvRabbit.StandbyWait);
         } else {
-            if (!al::isGreaterStep(this, randomWait))
+            if (!al::isGreaterStep(this, mRandomWait))
                 return;
             al::setNerve(this, &NrvRabbit.StandbyRest);
         }
@@ -635,13 +745,13 @@ void Rabbit::exeFind() {
         al::startAction(this, "Find");
 
     fall(0.98);
-    if (vertexA->getBool())
-        al::resetPosition(this, vertexA->getPos());
+    if (mCurrentVertex->getBool())
+        al::resetPosition(this, mCurrentVertex->getPos());
     al::turnToTarget(this, rs::getPlayerPos(this), 10.0f);
 
     if (al::isActionEnd(this)) {
         al::Nerve* nerve = &NrvRabbit.Wait;
-        if (someB > 0)
+        if (mTiredTimer > 0)
             nerve = &NrvRabbit.WaitTired;
         al::setNerve(this, nerve);
     }
@@ -652,18 +762,184 @@ void Rabbit::exeEndTired() {
         al::startAction(this, "EndTired");
     fall(0.98f);
     if (al::isActionEnd(this)) {
-        if (vertexB == nullptr)
+        if (mNextVertex == nullptr)
             al::setNerve(this, &NrvRabbit.Wait);
         else
-            setNerveJumpOrMove(this, vertexA, vertexB, false);
+            setNerveJumpOrMove(this, mCurrentVertex, mNextVertex, false);
     }
 }
 
-void Rabbit::exeMove() {}
+void Rabbit::exeMove() {
+    if (al::isFirstStep(this)) {
+        if (al::isNerve(this, &NrvRabbit.Move)) {
+            if (!al::isActionPlaying(this, "SwoonStart") &&
+                !al::isActionPlaying(this, "RunTired") &&
+                !al::isActionPlaying(this, "RunTiredSlow")) {
+                const char* action = "RunFine";
+                if (al::isNerve(this, &NrvRabbit.Move) && mTiredTimer > 0)
+                    action = mIsSwoon ? "RunSwoon" : "RunFine";
+                al::tryStartActionIfNotPlaying(this, action);
+            }
+        } else if (al::isNerve(this, &NrvRabbit.Jump)) {
+            if (!al::isActionPlaying(this, "JumpStart") && !al::isActionPlaying(this, "JumpLoop"))
+                al::startAction(this, "JumpStart");
+            slerpQuatToWorldUpFront(this, 1.0f);
+        }
+    }
 
-void Rabbit::exeWait() {}
+    if (al::isNerve(this, &NrvRabbit.Move)) {
+        if (isSwoonStartEnd(this)) {
+            const char* action = "RunFine";
+            if (al::isNerve(this, &NrvRabbit.Move) && mTiredTimer > 0)
+                action = mIsSwoon ? "RunSwoon" : "RunFine";
+            al::tryStartActionIfNotPlaying(this, action);
+        }
+    } else if (al::isNerve(this, &NrvRabbit.Jump)) {
+        if (al::isActionPlaying(this, "JumpStart") && al::isActionEnd(this))
+            al::tryStartActionIfNotPlaying(this, "JumpLoop");
+        else if (isSwoonStartEnd(this))
+            al::startAction(this, "SwoonLoop");
+    }
 
-void Rabbit::exeProvoke() {}
+    reduceStamina();
+    fall(0.01f);
+    if (al::isOnGround(this, 0))
+        slerpQuatToGround(this, 0.1f);
+    trySetPoseGraphMoveDir(0.25f);
+
+    sead::Vector3f direction = mNextVertex->getPos();
+    direction -= al::getTrans(this);
+    f32 distance = direction.length();
+
+    if (distance - getMoveSpeed() <= 20.0f) {
+        if (mNextVertex->getBool1() || !al::isNerve(this, &NrvRabbit.Jump)) {
+            onMoveEndUpdateCurrentVertexAndNextNerve();
+        } else if (mIsCaught) {
+            al::Nerve* nerve = &NrvRabbit.CatchToGiveItem;
+            if (mAppearItemId == 0x11)
+                nerve = &NrvRabbit.CatchToGiveMoon;
+            al::setNerve(this, nerve);
+        } else {
+            al::setNerve(this, &NrvRabbit.EndJump);
+        }
+        return;
+    }
+
+    if (al::tryNormalizeOrZero(&direction)) {
+        sead::Vector3f moveDirection = direction;
+        const sead::Vector3f& trans = al::getTrans(this);
+        f32 speed = getMoveSpeed();
+        sead::Vector3f nextTrans = speed * moveDirection + trans;
+        al::setTrans(this, nextTrans);
+    }
+}
+
+void Rabbit::exeWait() {
+    if ((al::isFirstStep(this) && !al::isActionPlaying(this, "SwoonStart")) ||
+        isSwoonStartEnd(this)) {
+        if (al::isNerve(this, &NrvRabbit.WaitTired)) {
+            al::startAction(this, mIsSwoon ? "WaitSwoon" : "WaitTired");
+        } else if (al::isNerve(this, &NrvRabbit.Wait)) {
+            mRandomWait = al::getRandom(0x1e0, 0xf0);
+            al::startAction(this, "Wait");
+        } else {
+            al::startAction(this, "Rest");
+        }
+    }
+
+    mStamina = sead::Mathf::min(mStamina + 0.05f, 1200.0f);
+    fall(0.98f);
+    if (al::isOnGround(this, 0))
+        slerpQuatToGround(this, 0.1f);
+
+    sead::Vector3f playerOffset = rs::getPlayerBodyPos(this);
+    playerOffset -= al::getTrans(this);
+    f32 playerDistance = playerOffset.length();
+    if (playerDistance < calcPlayerChaseDistance(this)) {
+        mNextVertex = tryFindNextVertex();
+        if (mNextVertex != nullptr && mCurrentVertex != mDestinationVertex) {
+            setNerveJumpOrMoveStart(this, mCurrentVertex, mNextVertex);
+            return;
+        }
+    }
+
+    if (al::isNerve(this, &NrvRabbit.Wait)) {
+        if (playerDistance < 1500.0f && mTiredTimer == 0) {
+            al::setNerve(this, &NrvRabbit.Provoke);
+            return;
+        }
+        if (mIsTired) {
+            al::setNerve(this, &NrvRabbit.WaitTired);
+            return;
+        }
+    }
+
+    if (mCurrentVertex->getBool())
+        al::resetPosition(this, mCurrentVertex->getPos());
+
+    if (al::isNerve(this, &NrvRabbit.Wait)) {
+        if (al::isGreaterStep(this, mRandomWait))
+            al::setNerve(this, &NrvRabbit.Rest);
+    } else if (al::isNerve(this, &NrvRabbit.Rest)) {
+        if (al::isGreaterStep(this, 180))
+            al::setNerve(this, &NrvRabbit.Wait);
+    } else if (al::isNerve(this, &NrvRabbit.WaitTired) && mTiredTimer == 0) {
+        al::setNerve(this, &NrvRabbit.Wait);
+    }
+}
+
+void Rabbit::exeProvoke() {
+    if ((al::isFirstStep(this) && !al::isActionPlaying(this, "SwoonStart")) ||
+        isSwoonStartEnd(this)) {
+        al::startAction(this, "Provoke");
+    }
+
+    mStamina = sead::Mathf::min(mStamina + 0.05f, 1200.0f);
+    fall(0.98f);
+    if (al::isOnGround(this, 0))
+        slerpQuatToGround(this, 0.1f);
+
+    if (mIsTired) {
+        al::setNerve(this, &NrvRabbit.WaitTired);
+        return;
+    }
+
+    {
+        sead::Vector3f direction = rs::getPlayerPos(this) - al::getTrans(this);
+        if (al::tryNormalizeOrZero(&direction)) {
+            sead::Vector3f up;
+            al::calcUpDir(&up, this);
+            if (!al::isParallelDirection(direction, up, 0.01f))
+                al::turnToDirectionAxis(this, direction, up, 6.0f);
+        }
+    }
+
+    sead::Vector3f playerOffset = rs::getPlayerBodyPos(this);
+    playerOffset -= al::getTrans(this);
+    f32 playerDistance = playerOffset.length();
+    if (playerDistance < calcPlayerChaseDistance(this)) {
+        mNextVertex = tryFindNextVertex();
+        if (mNextVertex != nullptr) {
+            setNerveJumpOrMoveStart(this, mCurrentVertex, mNextVertex);
+            return;
+        }
+    } else if (playerDistance > 1500.0f) {
+        al::Nerve* nerve = &NrvRabbit.Wait;
+        if (mTiredTimer > 0)
+            nerve = &NrvRabbit.WaitTired;
+        al::setNerve(this, nerve);
+        return;
+    }
+
+    sead::Vector3f front;
+    sead::Quatf targetQuat;
+    al::calcFrontDir(&front, this);
+    al::makeQuatUpFront(&targetQuat, sead::Vector3f::ey, front);
+    al::slerpQuat(al::getQuatPtr(this), al::getQuat(this), targetQuat, 0.25f);
+
+    if (mCurrentVertex->getBool())
+        al::resetPosition(this, mCurrentVertex->getPos());
+}
 
 void Rabbit::exeBreak() {
     if (al::isFirstStep(this))
@@ -673,7 +949,7 @@ void Rabbit::exeBreak() {
 
     if (al::isActionEnd(this)) {
         al::Nerve* nerve = &NrvRabbit.Wait;
-        if (someB > 0)
+        if (mTiredTimer > 0)
             nerve = &NrvRabbit.WaitTired;
         al::setNerve(this, nerve);
     }
@@ -681,38 +957,38 @@ void Rabbit::exeBreak() {
 
 void Rabbit::exeTurn() {
     if (al::isFirstStep(this))
-        al::startAction(this, someB > 0 ? "TurnTired" : "Turn");
+        al::startAction(this, mTiredTimer > 0 ? "TurnTired" : "Turn");
 
     fall(0.01f);
     trySetPoseGraphMoveDir(0.1f);
 
     if (al::isGreaterEqualStep(this, 15))
-        setNerveJumpOrMove(this, vertexA, vertexB, false);
+        setNerveJumpOrMove(this, mCurrentVertex, mNextVertex, false);
 }
 
 void Rabbit::exeTurnReverse() {
     if (al::isFirstStep(this)) {
-        al::startAction(this, someB > 0 ? "TurnTired" : "Turn");
-        al::calcQuat(&quat, this);
+        al::startAction(this, mTiredTimer > 0 ? "TurnTired" : "Turn");
+        al::calcQuat(&mTurnStartQuat, this);
 
-        sead::Vector3f diff = vertexB->getPos();
+        sead::Vector3f diff = mNextVertex->getPos();
         sead::Vector3f frontDir;
         diff -= al::getTrans(this);
         al::tryNormalizeOrZero(&diff);
         al::calcFrontDir(&frontDir, this);
-        bloat = al::calcAngleDegree(frontDir, diff);
+        mTurnAngle = al::calcAngleDegree(frontDir, diff);
         f32 cc = diff.z;
         if (frontDir.z * diff.x - cc * frontDir.x > 0.0f)  // mismatch here
-            bloat = 360.0f - bloat;
+            mTurnAngle = 360.0f - mTurnAngle;
     }
     fall(0.01f);
 
     const char* action = al::isActionPlaying(this, "Turn") ? "Turn" : "TurnTired";
     f32 fVar9 = al::calcNerveEaseInOutRate(this, al::getActionFrameMax(this, action));
-    al::rotateQuatYDirDegree(al::getQuatPtr(this), quat, -bloat * fVar9);
+    al::rotateQuatYDirDegree(al::getQuatPtr(this), mTurnStartQuat, -mTurnAngle * fVar9);
 
     if (al::isActionEnd(this))
-        setNerveJumpOrMove(this, vertexA, vertexB, false);
+        setNerveJumpOrMove(this, mCurrentVertex, mNextVertex, false);
 }
 
 void Rabbit::exeMoveStart() {
@@ -724,7 +1000,67 @@ void Rabbit::exeMoveStart() {
         al::setNerve(this, &NrvRabbit.Move);
 }
 
-void Rabbit::exeJumpPath() {}
+void Rabbit::exeJumpPath() {
+    if (al::isFirstStep(this)) {
+        const sead::Vector3f& end = mNextVertex->getPos();
+        const sead::Vector3f& start = mCurrentVertex->getPos();
+        f32 height = sead::Mathf::clampMin(end.y - start.y, 0.0f) + 300.0f;
+        al::ParabolicPath* path = mParabolicPath;
+        {
+            sead::Vector3f up = -al::getGravity(this);
+            path->initFromUpVector(start, end, up, height);
+        }
+        mPathMoveDistance = 0.0f;
+        al::tryStartActionIfNotPlaying(this, "JumpStart");
+        slerpQuatToWorldUpFront(this, 1.0f);
+    }
+
+    reduceStamina();
+    al::scaleVelocity(this, al::isOnGround(this, 0) ? 0.5f : 0.998f);
+
+    if (al::isActionPlaying(this, "JumpStart") && al::isActionEnd(this))
+        al::tryStartActionIfNotPlaying(this, "JumpLoop");
+    else if (isSwoonStartEnd(this))
+        al::tryStartActionIfNotPlaying(this, "SwoonLoop");
+
+    mPathMoveDistance += getMoveSpeed();
+    f32 rate =
+        sead::Mathf::clamp(mPathMoveDistance / mParabolicPath->getTotalLength(32), 0.0f, 1.0f);
+
+    sead::Vector3f prevTrans = al::getTrans(this);
+    mParabolicPath->calcPosition(al::getTransPtr(this), rate);
+
+    sead::Vector3f moveDir = al::getTrans(this);
+    moveDir -= prevTrans;
+    if (al::tryNormalizeOrZero(&moveDir)) {
+        sead::Vector3f front;
+        al::calcFrontDir(&front, this);
+        f32 angle = al::calcAngleDegree(front, moveDir);
+        if (moveDir.y < 0.0f)
+            angle = -angle;
+        mSpineAngle = mSpineAngle * 0.8f + angle * 0.2f;
+        mSpineAngle = sead::Mathf::clamp(mSpineAngle, -45.0f, 45.0f);
+    }
+
+    if (mNextVertex->getBool()) {
+        mParabolicPath->initFromUpVector(mCurrentVertex->getPos(), mNextVertex->getPos(),
+                                         -al::getGravity(this), 300.0f);
+    }
+
+    if (rate >= 1.0f) {
+        mSpineAngle = 0.0f;
+        if (mIsCaught) {
+            al::Nerve* nerve = &NrvRabbit.CatchToGiveItem;
+            if (mAppearItemId == 0x11)
+                nerve = &NrvRabbit.CatchToGiveMoon;
+            al::setNerve(this, nerve);
+        } else {
+            al::setNerve(this, &NrvRabbit.EndJump);
+        }
+    } else {
+        trySetPoseGraphMoveDir(0.25f);
+    }
+}
 
 void Rabbit::exeEndJump() {
     if (al::isFirstStep(this)) {
@@ -733,16 +1069,16 @@ void Rabbit::exeEndJump() {
         else if (al::isActionPlaying(this, "SwoonStart") || al::isActionPlaying(this, "SwoonLoop"))
             al::startAction(this, "SwoonLand");
         al::startHitReaction(this, "着地");
-        vertexA = vertexB;
-        vertexB = nullptr;
+        mCurrentVertex = mNextVertex;
+        mNextVertex = nullptr;
     }
     mStamina = sead::Mathf::min(mStamina + 0.05f, 1200.0f);
     fall(0.98);
-    if (vertexA->getBool())
-        al::resetPosition(this, vertexA->getPos());
+    if (mCurrentVertex->getBool())
+        al::resetPosition(this, mCurrentVertex->getPos());
     if (al::isActionEnd(this)) {
         al::Nerve* nerve = &NrvRabbit.Wait;
-        if (someB > 0)
+        if (mTiredTimer > 0)
             nerve = &NrvRabbit.WaitTired;
         al::setNerve(this, nerve);
     }
@@ -795,7 +1131,8 @@ void Rabbit::exeGiveItem() {
         return;
 
     if (mItemCount != mAppearItemNum) {
-        if (rs::tryAppearMultiCoinFromObj(this, otherHitSensor, al::getNerveStep(this), 200.0f)) {
+        if (rs::tryAppearMultiCoinFromObj(this, mRewardReceiverSensor, al::getNerveStep(this),
+                                          200.0f)) {
             const char* reaction = "アイテム出現";
             if (mAppearItemId == 0xc)
                 reaction = "ライフアップアイテム出現";

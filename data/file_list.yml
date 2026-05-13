@@ -105299,7 +105299,7 @@ Npc/Rabbit.o:
   - offset: 0x3b0938
     size: 1096
     label: _ZN6Rabbit7controlEv
-    status: NonMatchingMajor
+    status: Matching
   - offset: 0x3b0d80
     size: 52
     label: _ZN6Rabbit10endClippedEv
@@ -105347,11 +105347,11 @@ Npc/Rabbit.o:
   - offset: 0x3b19cc
     size: 824
     label: _ZN6Rabbit7exeWaitEv
-    status: NonMatchingMajor
+    status: Matching
   - offset: 0x3b1d04
     size: 804
     label: _ZN6Rabbit10exeProvokeEv
-    status: NonMatchingMajor
+    status: Matching
   - offset: 0x3b2028
     size: 68
     label: _ZN6Rabbit13reduceStaminaEv
@@ -105367,7 +105367,7 @@ Npc/Rabbit.o:
   - offset: 0x3b26cc
     size: 552
     label: _ZN6Rabbit22trySetPoseGraphMoveDirEf
-    status: NonMatchingMajor
+    status: Matching
   - offset: 0x3b28f4
     size: 196
     label: _ZNK6Rabbit12getMoveSpeedEv
@@ -105395,7 +105395,7 @@ Npc/Rabbit.o:
   - offset: 0x3b2db8
     size: 1108
     label: _ZN6Rabbit11exeJumpPathEv
-    status: NonMatchingMajor
+    status: Matching
   - offset: 0x3b320c
     size: 296
     label: _ZN6Rabbit10exeEndJumpEv
